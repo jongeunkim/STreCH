@@ -2,7 +2,7 @@ DIR=log_$(date +'%Y%m%d_%H%M%S')/
 mkdir -p $DIR
 echo "Directory $DIR is created."
 cp run.sh ${DIR}run.sh
-
+ 
 cnt=0
 for seed in 1
 do
