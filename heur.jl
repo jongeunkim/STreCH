@@ -1,24 +1,59 @@
 include("symbolic.jl")
 
-function update_nodes!(nodes, y, y_indexes, max_depth)
-    nodes_current = Set(nodes)
+function remove_single_child(nodes)
+    nodes = Set(nodes)
+    updated = true
     
-    # Expand
-    for (n,o) in y_indexes
-        if JuMP.value(y[n,o]) > 0.5
-            union!(nodes, Set([2*n, 2*n+1]))
+    while updated
+        updated = false
+        for n in collect(nodes)
+            if !isempty(intersect(nodes, Set([2*n, 2*n+1]))) && !issubset(Set([2*n, 2*n+1]), nodes)
+                setdiff!(nodes, Set([2*n, 2*n+1]))
+                updated = true
+                break
+            end
         end
     end
-    intersect!(nodes, Set(1:(2^(max_depth+1)-1)))
 
-    # Expand if the new set is a subset of the current
-    while issubset(nodes, nodes_current)
-        for n in nodes
-            union!(nodes, Set([2*n, 2*n+1]))
+    OrderedSet(sort(collect(nodes)))
+end
+
+function fill_single_child(nodes)
+    nodes = Set(nodes)
+    updated = true
+    
+    while updated
+        updated = false
+        for n in collect(nodes)
+            if !isempty(intersect(nodes, Set([2*n, 2*n+1]))) && !issubset(Set([2*n, 2*n+1]), nodes)
+                union!(nodes, Set([2*n, 2*n+1]))
+                updated = true
+                break
+            end
         end
     end
-    intersect!(nodes, Set(1:(2^(max_depth+1)-1)))
 
+    OrderedSet(sort(collect(nodes)))
+end
+
+function expand_nodes(nodes)
+    for n in collect(nodes)
+        union!(nodes, Set([n, 2*n, 2*n+1]))
+    end
+    OrderedSet(sort(collect(nodes)))
+end
+
+function update_nodes(ysol, max_depth, stepsize)
+    nodes = Set(keys(ysol))
+
+    for i in 1:Int(floor((stepsize-1)/2))
+        nodes = expand_nodes(nodes)
+    end
+
+    nodes = fill_single_child(nodes)
+
+    intersect!(nodes, Set(1:(2^(max_depth+1)-1)))
+ 
     OrderedSet(sort(collect(nodes)))
 end
 
@@ -57,52 +92,70 @@ function print_final_table(arr_obj, arr_time, arr_active)
 end
 
 function solve_Heuristic(obs, operators;
-                        time_limit=60, max_iter=100, max_depth=4, stepsize=2)
+                        time_limit=60, max_iter=100, max_depth=4, stepsize=2, min_improvement=0.1)
 
     ## Initialization
     iter            = 1
-    nodes           = Set(1:3)
-    max_active      = 3
+    nodes           = remove_single_child(Set(1:max(7, stepsize)))
+    # max_active      = 3
     remaining_time  = time_limit 
     arr_obj         = []
     arr_time        = [] 
     arr_active      = []
-    num_oper_lb     = Dict{Any,Int}()
-    num_oper_ub     = Dict{Any,Int}('T' => max_active)
+    arr_ysol        = []
+    arr_stepsize    = []
+    stepsize_extra  = 0
+    # num_oper_lb     = Dict{Any,Int}()
+    # num_oper_ub     = Dict{Any,Int}('T' => max_active)
 
     ## Initial solve
     feasible, obj, time, active, y, y_indexes, ysol = 
-        solve_MINLP(nodes, obs, operators, TIME_LIMIT=remaining_time)
+        solve_MINLP(nodes, obs, operators, ysol_dist=stepsize, TIME_LIMIT=remaining_time)
     time_limit      -= time
     arr_obj         = [arr_obj; obj]
     arr_time        = [arr_time; time]
     arr_active      = [arr_active; active]
+    arr_ysol        = [arr_ysol; deepcopy(ysol)]
+    arr_stepsize    = [arr_stepsize; stepsize]
 
     while feasible && iter < max_iter && obj > 1e-04 && remaining_time > 0
         # Update for the next iteration
         iter += 1
-        update_nodes!(nodes, y, y_indexes, max_depth)
-        num_oper_lb = update_num_oper_lb(y, y_indexes)
-        max_active += stepsize
-        num_oper_ub = update_num_oper_ub(max_active, num_oper_lb, stepsize)
-        
+        nodes       = update_nodes(ysol, max_depth, stepsize+stepsize_extra)
+        # num_oper_lb = update_num_oper_lb(y, y_indexes)
+        # max_active += stepsize
+        # num_oper_ub = update_num_oper_ub(max_active, num_oper_lb, stepsize)
+
         # @info "Heuristic Iteration $(iter)" nodes max_active num_oper_lb num_oper_ub
-        @info "Heuristic Iteration $(iter)" ysol stepsize
+        @info "Heuristic Iteration $(iter)" ysol stepsize+stepsize_extra
 
         # Solve        
         feasible, obj, time, active, y, y_indexes, ysol = 
             solve_MINLP(nodes, obs, operators, 
                         # num_oper_lb=num_oper_lb, num_oper_ub=num_oper_ub,
-                        ysol=ysol, ysol_dist=stepsize,
+                        ysol=ysol, ysol_dist=stepsize+stepsize_extra,
+                        ABS_GAP=(1-min_improvement)*arr_obj[end],
                         TIME_LIMIT=remaining_time)
         remaining_time -= time       
         arr_obj         = [arr_obj; obj]
         arr_time        = [arr_time; arr_time[end] + time]
         arr_active      = [arr_active; active]
+        arr_stepsize    = [arr_stepsize; stepsize + stepsize_extra]
+        arr_ysol        = [arr_ysol; deepcopy(ysol)]
+
+        if abs(arr_obj[end] - arr_obj[end-1]) < 1e-04
+            stepsize_extra += 1
+            ## Or find another solution ?
+
+            # break
+        else
+            stepsize_extra  = 0
+        end
     end
 
     @info "Final result\n" * print_final_table(arr_obj, arr_time, arr_active)
 
+    @info "Stepsize" arr_stepsize
+
     arr_obj, arr_time
 end
-

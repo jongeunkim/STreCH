@@ -35,6 +35,18 @@ function compute_vsol!(vsol, y, y_indexes, c, nodes, operA, obs, num_obs)
                 for i in 1:num_obs
                     vsol[i,n] = vsol[i,2*n] / vsol[i,2*n+1]
                 end
+            elseif o == 'R'
+                for i in 1:num_obs
+                    vsol[i,n] = sqrt(vsol[i,2*n+1])
+                end
+            elseif o == 'E'
+                for i in 1:num_obs
+                    vsol[i,n] = exp(vsol[i,2*n+1])
+                end
+            elseif o == 'L'
+                for i in 1:num_obs
+                    vsol[i,n] = log(vsol[i,2*n+1])
+                end
             else
                 println("Not a valid operator")
             end
@@ -46,7 +58,7 @@ function y_to_ysol(y, c, y_indexes, nodes, operA; print=false)
     ysol = Dict()
 
     for n in nodes
-        val = 0
+        val = 0.1
         ops = ""
         for o in operA
             if (n,o) in y_indexes
@@ -59,13 +71,17 @@ function y_to_ysol(y, c, y_indexes, nodes, operA; print=false)
         
         if print
             if ops == 'C'
-                ops = @sprintf("%.3f", JuMP.value(c[n]))
+                ops = @sprintf("%.0f", JuMP.value(c[n]))
             elseif typeof(ops) == Int
                 ops = @sprintf("x%d", ops)
             end
+  
+            ysol[n] = ops
+        else
+            if ops != ""
+                ysol[n] = ops
+            end
         end
-
-        ysol[n] = ops
     end
 
     ysol
@@ -74,8 +90,11 @@ end
 function print_tree(y, c, y_indexes, nodes, operA)
     out = "Print tree\n"
     
+    ysol = y_to_ysol(y, c, y_indexes, nodes, operA, print=false)
+    depth = Int(floor(log2(maximum(keys(ysol)))))
+
     ysol = y_to_ysol(y, c, y_indexes, nodes, operA, print=true)
-    depth = Int(floor(log2(maximum(nodes))))
+
 
     for d in 0:depth
         out = out * @sprintf("d=%d\t", d)
@@ -188,7 +207,8 @@ function solve_MINLP(nodes, obs, operators;
                     ysol=Dict(), ysol_dist=0,
                     CONSTR_YDEF=2, CONSTR_VDEF=2,
                     CONSTR_REDUN=2, CONSTR_SYM=0, CONSTR_IMP=0,
-                    TIME_LIMIT=10, REL_GAP=0.00, FEAS_TOL=1e-06)
+                    TIME_LIMIT=10, REL_GAP=0.00, ABS_GAP=0.00, 
+                    FEAS_TOL=1e-06)
 
     nodes = OrderedSet(sort(collect(nodes)))
     @info   "Print nodes & operators\n" *
@@ -208,8 +228,8 @@ function solve_MINLP(nodes, obs, operators;
     operL       = union(intersect(operators, Set('C')), indvars)
 
     ## Other parameters (bounds, weights, ...)
-    v_lb = -100
-    v_ub = 100
+    v_lb = isempty(intersect(operators, Set("EL"))) ? -1e+03 : -1e+02 
+    v_ub = isempty(intersect(operators, Set("EL"))) ? 1e+03 : 1e+02
     c_lb = -2
     c_ub = 2
     e_lb = -1e+09
@@ -221,8 +241,8 @@ function solve_MINLP(nodes, obs, operators;
 
     cst_abslb = 0.1
     mult_child_abslb = 0.01
-    div_rhs_abslb = 0.1
-    sqrt_rhs_lb = 0.1
+    div_rhs_abslb = 0.01
+    sqrt_rhs_lb = 0.01
     exp_rhs_lb = v_lb > 0 ? max(v_lb, log(v_lb)) : v_lb
     exp_rhs_ub = min(v_ub, log(v_ub))
     log_rhs_lb = max(v_lb, exp(v_lb))
@@ -231,8 +251,9 @@ function solve_MINLP(nodes, obs, operators;
     ## Create a model and set the solver's parameters (timelimit, gap, ...)
     @debug "Create a model and set the solver's parameters (timelimit, gap, ...)"
     optimizer = SCIP.Optimizer(
-                    display_verblevel=4,        # default = 4, 0:5
+                    display_verblevel=3,        # default = 4, 0:5
                     limits_gap=REL_GAP,         # default = 0
+                    limits_absgap=ABS_GAP,      # default = 0
                     limits_time=TIME_LIMIT,     
                     numerics_feastol=FEAS_TOL)     # default = 1e-06
     model = Model(() -> optimizer) 
@@ -248,7 +269,7 @@ function solve_MINLP(nodes, obs, operators;
     @variable(model, v_lb <= v[1:num_obs, nodes] <= v_ub)
 
     # c: constant value at node
-    @variable(model, c_lb <= c[nodes] <= c_ub)
+    @variable(model, c_lb <= c[nodes] <= c_ub, Int)
 
     # e: error = prediction - true
     @variable(model, e_lb <= e[1:num_obs] <= e_ub)
@@ -276,11 +297,14 @@ function solve_MINLP(nodes, obs, operators;
         num_oper[o] >= num_oper_lb[o])
 
     ## Constrs for k-neighbors search
-    if !isempty(ysol)
+    if ysol_dist > 0
         @info "Constrs for k-neighbors search" ysol ysol_dist
-        @constraint(model, ysol_neighbors, sum((1 - y[n,o]) for (n,o) in ysol if (n,o) in y_indexes) <= ysol_dist)
+        # @constraint(model, ysol_neighbors, sum((1 - y[n,o]) for (n,o) in ysol if (n,o) in y_indexes) <= ysol_dist)
+        @constraint(model, ysol_neighbors, 
+            sum( (1-y[n,ysol[n]]) for n in nodes if n in keys(ysol) ) + 
+            sum( sum(y[n,o] for o in operA if (n,o) in y_indexes) for n in nodes if !(n in keys(ysol)) ) <= ysol_dist)
     end
-
+    
     ## Constrs for defining e
     @debug "Constrs for defining e"
     @constraint(model, edef[i in 1:num_obs], e[i] == v[i,1] - obs[i,end])
@@ -333,7 +357,7 @@ function solve_MINLP(nodes, obs, operators;
     if CONSTR_REDUN == 1
         nothing
     elseif CONSTR_REDUN == 2
-        if 'C' in operA
+        if 'C' in operA && JuMP.is_integer(c[1])
             @constraints(model, begin
                 redun_cst_oper[n in nleaves], y[2*n,'C'] + y[2*n+1,'C'] <= 1
                 redun_cst_rhs[n in nleaves], y[2*n+1,'C'] <= y[n,'+'] + y[n,'*']
@@ -454,6 +478,35 @@ function solve_MINLP(nodes, obs, operators;
                 v_div_lb[i in 1:num_obs, n in nleaves],
                     v[i,n] * v[i,2*n+1] - v[i,2*n] >= 
                     (min(v_lb^2, v_ub^2, v_lb*v_ub) - v_ub) * (1 - y[n,'D'])
+            end)
+        end
+
+        if 'R' in operA
+            @constraints(model, begin
+                v_sqrt_ub[i in 1:num_obs, n in nleaves],
+                    v[i,n] * v[i,n] - v[i,2*n+1] <= 
+                    (max(v_lb^2, v_ub^2) - v_lb) * (1 - y[n,'R'])
+                v_sqrt_lb[i in 1:num_obs, n in nleaves],
+                    v[i,n] * v[i,n] - v[i,2*n+1] >= 
+                    (- v_ub) * (1 - y[n,'R'])
+            end)
+        end
+
+        if 'E' in operA
+            @constraints(model, begin
+                v_exp_ub[i in 1:num_obs, n in nleaves],
+                    v[i,n] - exp(v[i,2*n+1]) <= v_ub * (1 - y[n,'E'])
+                v_exp_lb[i in 1:num_obs, n in nleaves],
+                    v[i,n] - exp(v[i,2*n+1]) >= (v_lb - exp(v_ub)) * (1 - y[n,'E'])
+            end)
+        end
+
+        if 'L' in operA
+            @constraints(model, begin
+                v_log_ub[i in 1:num_obs, n in nleaves],
+                    exp(v[i,n]) - v[i,2*n+1] <= (exp(v_ub) - v_lb) * (1 - y[n,'L'])
+                v_log_lb[i in 1:num_obs, n in nleaves],
+                    exp(v[i,n]) - v[i,2*n+1] >= (-v_ub) * (1 - y[n,'L'])
             end)
         end
 
