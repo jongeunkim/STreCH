@@ -72,7 +72,9 @@ function y_to_ysol(y, c, y_indexes, nodes, operA; print=false)
                 ops = @sprintf("x%d", ops)
             end
   
-            ysol[n] = ops
+            if ops != ""
+                ysol[n] = ops
+            end
         else
             if ops != ""
                 ysol[n] = ops

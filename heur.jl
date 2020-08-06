@@ -82,10 +82,10 @@ function update_num_oper_ub(max_active, num_oper_lb, stepsize)
 end
 
 function print_final_table(arr_obj, arr_time, arr_active)
-    out = "    iter\t    time\t      obj\t   active\n"
+    out = "    iter\t    time\t      obj\t   obj(e)\t   active\n"
     
     for i = 1:length(arr_obj)
-        out *= @sprintf("%12d\t%12.1f\t%12.6f\t%12d\n", i, arr_time[i], arr_obj[i], arr_active[i])
+        out *= @sprintf("%12d\t%12.1f\t%12.6f\t%12.6e\t%12d\n", i, arr_time[i], arr_obj[i], arr_obj[i], arr_active[i])
     end
 
     out
@@ -153,10 +153,11 @@ function solve_Heuristic(obs, operators;
         arr_stepsize    = [arr_stepsize; stepsize + stepsize_extra]
         arr_ysol        = [arr_ysol; deepcopy(ysol)]
 
-        if arr_obj[end] >= arr_obj[end-1] + 1e-04
-            ysol = arr_ysol[end-1]
+        epsilon = 1e-12
+        if arr_obj[end] >=  minimum(arr_obj[1:end-1]) + epsilon
+            ysol = arr_ysol[argmin(arr_obj[1:end-1])]
             stepsize_extra += 1
-        elseif abs(arr_obj[end] - arr_obj[end-1]) < 1e-04
+        elseif abs(arr_obj[end] - minimum(arr_obj[1:end-1])) < epsilon
             stepsize_extra += 1
         else
             stepsize_extra  = 0

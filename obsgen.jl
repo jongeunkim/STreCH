@@ -268,8 +268,19 @@ function obs_generator(id, seed, num_obs, noise_level, filename="")
     end
 
     # Add Gaussian noise
-    Random.seed!(seed+1000)
-    obs[:,end] = obs[:,end] .* (noise_level .* Random.randn((num_obs, 1)) .+ 1)
+    if noise_level > 0
+        if id in []
+            noise_level = max(1e-01, noise_level)
+        elseif id in [115]
+            noise_level = max(1e-02, noise_level)
+        elseif id in [5]
+            noise_level = max(1e-03, noise_level)
+        end
+
+        Random.seed!(seed+1000)
+        obs[:,end] = obs[:,end] .* (noise_level .* Random.randn((num_obs, 1)) .+ 1)
+    end
+
 
     if filename != ""
         open(filename, "w") do io
@@ -291,19 +302,23 @@ function obs_optval(id, seed, num_obs, noise_level)
     mse
 end
 
+ids = [1:6; [106, 107, 108, 109, 115]]
+seeds = [1]
+num_obss = [10]
+
 ## Generate obs
-# for id in 1:6, seed in [1], num_obs in [10], noise_level in [0]
-#     obs_generator(id, seed, num_obs, noise_level, "obs/i$id.obs")
-# end
+for id in ids, seed in seeds, num_obs in num_obss, noise_level in [0]
+    obs_generator(id, seed, num_obs, noise_level, "obs/i$(id)_z$(noise_level).obs")
+end
 
-# for id in [106, 107, 108, 109, 115], seed in [1], num_obs in [10], noise_level in [0]
-#     obs_generator(id, seed, num_obs, noise_level, "obs/i$id.obs")
-# end
-
-# for id in 1:6, seed in [1], num_obs in [10], noise_level in [1e-04]
-#     println(obs_optval(id, seed, num_obs, noise_level))
-# end
-
-# for id in [106, 107, 108, 109, 115], seed in [1], num_obs in [10], noise_level in [1e-04]
-#     println(obs_optval(id, seed, num_obs, noise_level))
-# end
+## Write optimal values
+io = open("obs/optval.log", "w+")
+write(io, @sprintf("%8s\t%8s\t%8s\t%16s\t%16s\n", "id", "seed", "num_obs", "noise_level", "optval"))
+for id in ids, seed in seeds, num_obs in num_obss
+    for noise_level in [1e-01, 1e-02, 1e-03, 1e-04]
+        optval = obs_optval(id, seed, num_obs, noise_level)
+        out = @sprintf("%8d\t%8d\t%8d\t%16.1e\t%16.6e\n", id, seed, num_obs, noise_level, optval)
+        write(io, out)
+    end
+end
+close(io)

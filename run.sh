@@ -7,7 +7,7 @@ cnt=0
 for seed in 1
 do
 	#for id in 1 2
-	for id in 1 2 3 4 5 6 106 107 108 109 115
+	for id in 115 #1 2 3 4 5 6 106 107 108 109 115
 	do
 		for num_obs in 10
 		do
@@ -16,7 +16,7 @@ do
 				INS=i${id}_s${seed}_n${num_obs}_z${noise_level}/
 				mkdir -p $DIR$INS
 
-				for time_limit in 120 300 #p3600 7200 10800 21600
+				for time_limit in 300 3600 7200 10800 21600
 				do
 					TIME=t${time_limit}/
 					mkdir -p $DIR$INS$TIME
@@ -33,13 +33,13 @@ do
 						done
 					done
 
-					# model="minlp"
-					# for max_depth in 0 1 2 3 4 5 6 7
-					# do
-					# 	ALGO=${model}_D${max_depth}
-					# 	nohup julia main.jl $DIR$INS$TIME$ALGO $id $seed $num_obs $noise_level $time_limit $model $max_depth > $DIR$INS$TIME$ALGO.console 2>&1 &
-					# 	cnt=$(( cnt + 1 ))
-                    # done
+					model="minlp"
+					for max_depth in 2 3 4 5 6 7
+					do
+						ALGO=${model}_D${max_depth}
+						nohup julia main.jl $DIR$INS$TIME$ALGO $id $seed $num_obs $noise_level $time_limit $model $max_depth > $DIR$INS$TIME$ALGO.console 2>&1 &
+						cnt=$(( cnt + 1 ))
+                    done
 				done
 			done
 		done
