@@ -2,6 +2,8 @@ using DelimitedFiles
 using Printf
 using Random
 
+include("utils.jl")
+
 function initialize_obs(num_obs, num_var, seed)
     obs = zeros(num_obs, num_var)
     Random.seed!(seed)
@@ -279,13 +281,29 @@ function obs_generator(id, seed, num_obs, noise_level, filename="")
     obs, obs_info
 end
 
+function obs_optval(id, seed, num_obs, noise_level)
+    obs_noiseless, obs_info = obs_generator(id, seed, num_obs, 0)
+
+    obs_noise, obs_info = obs_generator(id, seed, num_obs, noise_level)
+
+    mse = compute_mse(obs_noise[:,end], obs_noiseless[:,end])
+
+    mse
+end
+
 ## Generate obs
-for id in 1:6, seed in [1], num_obs in [10], noise_level in [0]
-    obs_generator(id, seed, num_obs, noise_level, "obs/i$id.obs")
-end
+# for id in 1:6, seed in [1], num_obs in [10], noise_level in [0]
+#     obs_generator(id, seed, num_obs, noise_level, "obs/i$id.obs")
+# end
 
-for id in [106, 107, 108, 109, 115], seed in [1], num_obs in [10], noise_level in [0]
-    obs_generator(id, seed, num_obs, noise_level, "obs/i$id.obs")
-end
+# for id in [106, 107, 108, 109, 115], seed in [1], num_obs in [10], noise_level in [0]
+#     obs_generator(id, seed, num_obs, noise_level, "obs/i$id.obs")
+# end
 
+# for id in 1:6, seed in [1], num_obs in [10], noise_level in [1e-04]
+#     println(obs_optval(id, seed, num_obs, noise_level))
+# end
 
+# for id in [106, 107, 108, 109, 115], seed in [1], num_obs in [10], noise_level in [1e-04]
+#     println(obs_optval(id, seed, num_obs, noise_level))
+# end

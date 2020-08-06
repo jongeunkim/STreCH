@@ -91,8 +91,9 @@ function print_final_table(arr_obj, arr_time, arr_active)
     out
 end
 
-function solve_Heuristic(obs, operators;
-                        time_limit=60, max_iter=100, max_depth=4, stepsize=2, min_improvement=0.1)
+function solve_Heuristic(obs, operators; 
+                        init_solve=1, time_limit=60, stepsize=2, obj_termination=1e-06,
+                        max_iter=100, max_depth=10, min_improvement=0.1)
 
     ## Initialization
     iter            = 1
@@ -109,8 +110,17 @@ function solve_Heuristic(obs, operators;
     # num_oper_ub     = Dict{Any,Int}('T' => max_active)
 
     ## Initial solve
-    feasible, obj, time, active, y, y_indexes, ysol = 
-        solve_MINLP(nodes, obs, operators, ysol_dist=stepsize, TIME_LIMIT=remaining_time)
+    if init_solve == 1
+        # ysol = 0 and ysol_dist=stepsize
+        feasible, obj, time, active, y, y_indexes, ysol = 
+            solve_MINLP(nodes, obs, operators, ysol=Dict(), ysol_dist=stepsize, TIME_LIMIT=remaining_time)
+    elseif init_solve == 2
+        # Depth two tree problem
+        nodes = Set(1:7)
+        feasible, obj, time, active, y, y_indexes, ysol = 
+            solve_MINLP(nodes, obs, operators, TIME_LIMIT=remaining_time)
+    end
+    
     time_limit      -= time
     arr_obj         = [arr_obj; obj]
     arr_time        = [arr_time; time]
@@ -118,7 +128,7 @@ function solve_Heuristic(obs, operators;
     arr_ysol        = [arr_ysol; deepcopy(ysol)]
     arr_stepsize    = [arr_stepsize; stepsize]
 
-    while feasible && iter < max_iter && obj > 1e-04 && remaining_time > 0
+    while feasible && iter < max_iter && obj > obj_termination && remaining_time > 0
         # Update for the next iteration
         iter += 1
         nodes       = update_nodes(ysol, max_depth, stepsize+stepsize_extra)
@@ -134,7 +144,7 @@ function solve_Heuristic(obs, operators;
             solve_MINLP(nodes, obs, operators, 
                         # num_oper_lb=num_oper_lb, num_oper_ub=num_oper_ub,
                         ysol=ysol, ysol_dist=stepsize+stepsize_extra,
-                        ABS_GAP=(1-min_improvement)*arr_obj[end],
+                        ABS_GAP=(1-min_improvement)*minimum(arr_obj),
                         TIME_LIMIT=remaining_time)
         remaining_time -= time       
         arr_obj         = [arr_obj; obj]
@@ -143,11 +153,11 @@ function solve_Heuristic(obs, operators;
         arr_stepsize    = [arr_stepsize; stepsize + stepsize_extra]
         arr_ysol        = [arr_ysol; deepcopy(ysol)]
 
-        if abs(arr_obj[end] - arr_obj[end-1]) < 1e-04
+        if arr_obj[end] >= arr_obj[end-1] + 1e-04
+            ysol = arr_ysol[end-1]
             stepsize_extra += 1
-            ## Or find another solution ?
-
-            # break
+        elseif abs(arr_obj[end] - arr_obj[end-1]) < 1e-04
+            stepsize_extra += 1
         else
             stepsize_extra  = 0
         end

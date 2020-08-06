@@ -6,11 +6,7 @@ using Logging
 using Printf
 using SCIP
 
-function compute_mse(y_pred, y_true)
-    err = y_pred - y_true
-    mse = sum(err.^2) / length(y_true)
-    mse
-end
+include("utils.jl")
 
 function compute_vsol!(vsol, y, y_indexes, c, nodes, operA, obs, num_obs)
     for n in sort(collect(nodes), rev=true), o in operA
@@ -92,21 +88,22 @@ function print_tree(y, c, y_indexes, nodes, operA)
     
     ysol = y_to_ysol(y, c, y_indexes, nodes, operA, print=false)
     depth = Int(floor(log2(maximum(keys(ysol)))))
+    @info "print ysol" ysol
 
     ysol = y_to_ysol(y, c, y_indexes, nodes, operA, print=true)
 
 
     for d in 0:depth
-        out = out * @sprintf("d=%d\t", d)
+        out = out * @sprintf("d=%d\t\t", d)
 
-        cnt = Int(sum([max(2.0^i, 1) for i in (d-1):(depth-2)]))
-        out = out * repeat("\t", cnt)
+        # cnt = Int(sum([max(2.0^i, 1) for i in (d-1):(depth-2)]))
+        # out = out * repeat("\t", cnt)
 
         for n in 2^d:(2^(d+1)-1)
             if n in keys(ysol)
-                out = out * @sprintf("%s\t", ysol[n])
+                out = out * @sprintf("%d:%s\t", n, ysol[n])
             else
-                out = out * "\t"
+                # out = out * "\t"
             end
         end
 
@@ -204,10 +201,10 @@ end
 
 function solve_MINLP(nodes, obs, operators;
                     num_oper_lb=Dict(), num_oper_ub=Dict(),
-                    ysol=Dict(), ysol_dist=0,
+                    ysol=nothing, ysol_dist=0,
                     CONSTR_YDEF=2, CONSTR_VDEF=2,
                     CONSTR_REDUN=2, CONSTR_SYM=0, CONSTR_IMP=0,
-                    TIME_LIMIT=10, REL_GAP=0.00, ABS_GAP=0.00, 
+                    DISPLAY_VERBLEVEL=3, TIME_LIMIT=10, REL_GAP=0.00, ABS_GAP=0.00, 
                     FEAS_TOL=1e-06)
 
     nodes = OrderedSet(sort(collect(nodes)))
@@ -241,7 +238,7 @@ function solve_MINLP(nodes, obs, operators;
 
     cst_abslb = 0.1
     mult_child_abslb = 0.01
-    div_rhs_abslb = 0.01
+    div_child_abslb = 0.01
     sqrt_rhs_lb = 0.01
     exp_rhs_lb = v_lb > 0 ? max(v_lb, log(v_lb)) : v_lb
     exp_rhs_ub = min(v_ub, log(v_ub))
@@ -251,11 +248,11 @@ function solve_MINLP(nodes, obs, operators;
     ## Create a model and set the solver's parameters (timelimit, gap, ...)
     @debug "Create a model and set the solver's parameters (timelimit, gap, ...)"
     optimizer = SCIP.Optimizer(
-                    display_verblevel=3,        # default = 4, 0:5
-                    limits_gap=REL_GAP,         # default = 0
-                    limits_absgap=ABS_GAP,      # default = 0
+                    display_verblevel=DISPLAY_VERBLEVEL,        # default = 4, 0:5
+                    limits_gap=REL_GAP,                         # default = 0
+                    limits_absgap=ABS_GAP,                      # default = 0
                     limits_time=TIME_LIMIT,     
-                    numerics_feastol=FEAS_TOL)     # default = 1e-06
+                    numerics_feastol=FEAS_TOL)                  # default = 1e-06
     model = Model(() -> optimizer) 
 
     ## Decision variables
@@ -297,12 +294,22 @@ function solve_MINLP(nodes, obs, operators;
         num_oper[o] >= num_oper_lb[o])
 
     ## Constrs for k-neighbors search
-    if ysol_dist > 0
+    if !isnothing(ysol) 
+        @info "Set start value" ysol
+        for (n,o) in y_indexes
+            if n in keys(ysol) && o == ysol[n]
+                JuMP.set_start_value(y[n,o], 1)
+            else
+                JuMP.set_start_value(y[n,o], 0)
+            end
+        end
+
+        if ysol_dist > 0
         @info "Constrs for k-neighbors search" ysol ysol_dist
-        # @constraint(model, ysol_neighbors, sum((1 - y[n,o]) for (n,o) in ysol if (n,o) in y_indexes) <= ysol_dist)
         @constraint(model, ysol_neighbors, 
             sum( (1-y[n,ysol[n]]) for n in nodes if n in keys(ysol) ) + 
             sum( sum(y[n,o] for o in operA if (n,o) in y_indexes) for n in nodes if !(n in keys(ysol)) ) <= ysol_dist)
+        end
     end
     
     ## Constrs for defining e
@@ -379,16 +386,16 @@ function solve_MINLP(nodes, obs, operators;
         @constraint(model, domain_cst[n in nodes], c[n]^2 >= cst_abslb^2 * y[n,'C'])
     end
 
-    if '*' in operA && mult_child_abslb > 0
+    if ('*' in operA && mult_child_abslb > 0) || ('D' in operA && div_child_abslb > 0)
         @constraint(model, domain_lch_abslb[i in 1:num_obs, n in nleaves], 
-            v[i,2*n]^2 >= mult_child_abslb^2 * y[n,'*'])
-    end
-    
-    if ('*' in operA && mult_child_abslb > 0) || ('D' in operA && div_rhs_abslb > 0)
+        v[i,2*n]^2 >= 
+            ( '*' in operA ? mult_child_abslb^2 * y[n,'*'] : 0 ) +
+            ( 'D' in operA ? div_child_abslb^2 * y[n,'D'] : 0 ) )
+
         @constraint(model, domain_rch_abslb[i in 1:num_obs, n in nleaves], 
             v[i,2*n+1]^2 >= 
                 ( '*' in operA ? mult_child_abslb^2 * y[n,'*'] : 0 ) +
-                ( 'D' in operA ? div_rhs_abslb^2 * y[n,'D'] : 0 ) )
+                ( 'D' in operA ? div_child_abslb^2 * y[n,'D'] : 0 ) )
     end
 
     if ('R' in operA && sqrt_rhs_lb > 0) || ('E' in operA && exp_rhs_lb > v_lb) || 
