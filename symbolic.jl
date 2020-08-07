@@ -8,104 +8,117 @@ using SCIP
 
 include("utils.jl")
 
-function compute_vsol!(vsol, y, y_indexes, c, nodes, operA, obs, num_obs)
-    for n in sort(collect(nodes), rev=true), o in operA
-        if (n,o) in y_indexes && JuMP.value(y[n,o]) > 0.5
-            if typeof(o) == Int
-                vsol[:,n] = obs[:,o]
-            elseif o == 'C'
-                vsol[:,n] .= JuMP.value(c[n])
-            elseif o in '+'
-                for i in 1:num_obs
-                    vsol[i,n] = vsol[i,2*n] + vsol[i,2*n+1]
-                end
-            elseif o == '-'
-                for i in 1:num_obs
-                    vsol[i,n] = vsol[i,2*n] - vsol[i,2*n+1]
-                end
-            elseif o == '*'
-                for i in 1:num_obs
-                    vsol[i,n] = vsol[i,2*n] * vsol[i,2*n+1]
-                end
-            elseif o == 'D'
-                for i in 1:num_obs
-                    vsol[i,n] = vsol[i,2*n] / vsol[i,2*n+1]
-                end
-            elseif o == 'R'
-                for i in 1:num_obs
-                    vsol[i,n] = sqrt(vsol[i,2*n+1])
-                end
-            elseif o == 'E'
-                for i in 1:num_obs
-                    vsol[i,n] = exp(vsol[i,2*n+1])
-                end
-            elseif o == 'L'
-                for i in 1:num_obs
-                    vsol[i,n] = log(vsol[i,2*n+1])
-                end
-            else
-                println("Not a valid operator")
-            end
-        end
-    end
-end
-
-function y_to_ysol(y, c, y_indexes, nodes, operA; print=false)
-    ysol = Dict()
+function get_ysol(y, y_indexes, nodes, operA; num_result=1)
+    ysol = SortedDict{Any,Any}()
 
     for n in nodes
-        val = 0.1
-        ops = ""
-        for o in operA
-            if (n,o) in y_indexes
-                if JuMP.value(y[n,o]) > val
-                    val = JuMP.value(y[n,o])
-                    ops = o
-                end
-            end
-        end
-        
-        if print
-            if ops == 'C'
-                ops = @sprintf("%.0f", JuMP.value(c[n]))
-            elseif typeof(ops) == Int
-                ops = @sprintf("x%d", ops)
-            end
-  
-            if ops != ""
-                ysol[n] = ops
-            end
-        else
-            if ops != ""
-                ysol[n] = ops
-            end
+        arr_val     = [JuMP.value(y[n,o], result=num_result) for o in operA if (n,o) in y_indexes]
+        arr_oper    = [o for o in operA if (n,o) in y_indexes]
+
+        if maximum(arr_val) > 0.1
+            ysol[n] = arr_oper[argmax(arr_val)]
         end
     end
 
     ysol
 end
 
-function print_tree(y, c, y_indexes, nodes, operA)
-    out = "Print tree\n"
+function get_csol(c, nodes; num_result=1)
+    SortedDict(n => JuMP.value(c[n]; result=num_result) for n in nodes)
+end
+
+function get_treesol(ysol, csol)
+    treesol = deepcopy(ysol)
     
-    ysol = y_to_ysol(y, c, y_indexes, nodes, operA, print=false)
-    depth = Int(floor(log2(maximum(keys(ysol)))))
-    @info "print ysol" ysol
+    for (n,o) in treesol
+        if o == 'C'
+            treesol[n] = @sprintf("%.0f", csol[n])
+        elseif typeof(o) == Int
+            treesol[n] = @sprintf("x%d", o)
+        end
+    end
 
-    ysol = y_to_ysol(y, c, y_indexes, nodes, operA, print=true)
+    treesol
+end
 
+function get_vsol(ysol, csol, obs)
+    domain_error = false
+    nodes_rev = sort(collect(keys(ysol)), rev=true)
+    num_obs = size(obs)[1]
+    vsol = zeros(num_obs, maximum(nodes_rev))
 
+    for n in nodes_rev
+        o = ysol[n]
+
+        if typeof(o) == Int
+            vsol[:,n] = obs[:,o]
+        elseif o == 'C'
+            vsol[:,n] .= csol[n]
+        elseif o in '+'
+            for i in 1:num_obs
+                vsol[i,n] = vsol[i,2*n] + vsol[i,2*n+1]
+            end
+        elseif o == '-'
+            for i in 1:num_obs
+                vsol[i,n] = vsol[i,2*n] - vsol[i,2*n+1]
+            end
+        elseif o == '*'
+            for i in 1:num_obs
+                vsol[i,n] = vsol[i,2*n] * vsol[i,2*n+1]
+            end
+        elseif o == 'D'
+            for i in 1:num_obs
+                if abs(vsol[i,2*n+1]) < eps(Float64)
+                    @info "domain error in compute_vsol!()" n o
+                    domain_error = true
+                    break
+                end
+                vsol[i,n] = vsol[i,2*n] / vsol[i,2*n+1]
+            end
+        elseif o == 'R'
+            for i in 1:num_obs
+                if vsol[i,2*n+1] < 0
+                    @info "domain error in compute_vsol!()" n o
+                    domain_error = true
+                    break
+                end
+                vsol[i,n] = sqrt(vsol[i,2*n+1])
+            end
+        elseif o == 'E'
+            for i in 1:num_obs
+                vsol[i,n] = exp(vsol[i,2*n+1])
+            end
+        elseif o == 'L'
+            for i in 1:num_obs
+                if vsol[i,2*n+1] <= 0
+                    @info "domain error in compute_vsol!()" n o
+                    domain_error = true
+                    break
+                end
+                vsol[i,n] = log(vsol[i,2*n+1])
+            end
+        else
+            println("Not a valid operator")
+        end
+    end
+
+    if domain_error
+        vsol .= 0
+    end
+
+    vsol, domain_error
+end
+
+function print_tree(treesol)
+    out = "Print tree\n"
+
+    depth = Int(floor(log2(maximum(keys(treesol)))))
     for d in 0:depth
-        out = out * @sprintf("d=%d\t\t", d)
-
-        # cnt = Int(sum([max(2.0^i, 1) for i in (d-1):(depth-2)]))
-        # out = out * repeat("\t", cnt)
+        out = out * @sprintf("d=%2d\t\t", d)
 
         for n in 2^d:(2^(d+1)-1)
-            if n in keys(ysol)
-                out = out * @sprintf("%d:%s\t", n, ysol[n])
-            else
-                # out = out * "\t"
+            if n in keys(treesol)
+                out = out * @sprintf("%d:%s  ", n, treesol[n])
             end
         end
 
@@ -203,11 +216,11 @@ end
 
 function solve_MINLP(nodes, obs, operators;
                     num_oper_lb=Dict(), num_oper_ub=Dict(),
-                    ysol=nothing, ysol_dist=0,
+                    ysol=nothing, ysol_dist=0, ysol_dist_min=0, ysol_fix_level=-1,
                     CONSTR_YDEF=2, CONSTR_VDEF=2,
                     CONSTR_REDUN=2, CONSTR_SYM=0, CONSTR_IMP=0,
-                    DISPLAY_VERBLEVEL=3, TIME_LIMIT=10, REL_GAP=0.00, ABS_GAP=0.00, 
-                    FEAS_TOL=1e-06)
+                    DISPLAY_VERBLEVEL=3, TIME_LIMIT=10, REL_GAP=0.00, ABS_GAP=0.00, FEAS_TOL=1e-06,
+                    print_all_solutions=false)
 
     nodes = OrderedSet(sort(collect(nodes)))
     @info   "Print nodes & operators\n" *
@@ -215,8 +228,8 @@ function solve_MINLP(nodes, obs, operators;
             "operators: $(operators)"
 
     ## Define useful variables from { nodes, obs, operators }
-    leaves		= OrderedSet([n for n in nodes if isempty(intersect(Set([2*n, 2*n+1]), nodes))])
-    nleaves		= setdiff(nodes, leaves) 
+    leaves		= get_leaves(nodes)
+    nleaves		= get_nonleaves(nodes)
     num_obs 	= size(obs, 1)
     num_indvars = size(obs, 2) - 1
     indvars		= OrderedSet(1:num_indvars)
@@ -307,10 +320,32 @@ function solve_MINLP(nodes, obs, operators;
         end
 
         if ysol_dist > 0
-        @info "Constrs for k-neighbors search" ysol ysol_dist
-        @constraint(model, ysol_neighbors, 
-            sum( (1-y[n,ysol[n]]) for n in nodes if n in keys(ysol) ) + 
-            sum( sum(y[n,o] for o in operA if (n,o) in y_indexes) for n in nodes if !(n in keys(ysol)) ) <= ysol_dist)
+            @info "Constrs for k-neighbors search" ysol ysol_dist ysol_dist_min
+            @assert ysol_dist >= ysol_dist_min
+            @assert ysol_dist_min >= 0
+            @constraint(model, ysol_neighbors, 
+                ysol_dist_min <=
+                sum( (1-y[n,ysol[n]]) for n in nodes if n in keys(ysol) ) + 
+                sum( sum(y[n,o] for o in operA if (n,o) in y_indexes) for n in nodes if !(n in keys(ysol)) ) <= ysol_dist)
+        end
+
+        if ysol_fix_level >= 0
+            @info "Fix ysol level = $(ysol_fix_level)"
+
+            nodes_fixed = keys(ysol)
+            for i in 1:ysol_fix_level
+                nodes_fixed = get_nonleaves(nodes_fixed)
+            end
+
+            for n in nodes_fixed, o in operA
+                if (n,o) in y_indexes
+                    JuMP.is_binary(y[n,o]) ? JuMP.unset_binary(y[n,o]) : nothing
+                    JuMP.is_fixed(y[n,o]) ? JuMP.unfix(y[n,o]) : nothing
+                    JuMP.has_lower_bound(y[n,o]) ? JuMP.delete_lower_bound(y[n,o]) : nothing
+                    JuMP.has_upper_bound(y[n,o]) ? JuMP.delete_upper_bound(y[n,o]) : nothing
+                    JuMP.fix(y[n,o], o == ysol[n] ? 1 : 0)
+                end
+            end
         end
     end
     
@@ -526,37 +561,84 @@ function solve_MINLP(nodes, obs, operators;
 
     @debug "Optimize!"
     optimize!(model)
-    feasible = JuMP.has_values(model)
+    time = JuMP.solve_time(model)
 
-    ## Print result
-    vsol = zeros(num_obs, maximum(nodes))
-    if feasible
-        compute_vsol!(vsol, y, y_indexes, c, nodes, operA, obs, num_obs)
+    ## Find the index of the best feasible solution
+    ## We have this code because the returned solution is sometimes infeasible
+    num_results = JuMP.result_count(model)
+    if num_results == 0 
+        # There is no solution. We stop here.
+        @info   "Print result (no solution)\n" *
+                @sprintf("time                  = %12.2f\n",    time) *
+                @sprintf("termination status    = %s\n",        termination_status(model)) *
+                @sprintf("num_results           = %12d\n",      num_results) *
+                @sprintf("bound                 = %12.6f\n",    JuMP.objective_bound(model)) *
+                @sprintf("relgap                = %12.6f\n",    JuMP.relative_gap(model)) *
+                @sprintf("bnbnode               = %12d\n",      JuMP.node_count(model))
+        return false, time, 1e+09, nothing, nothing, nothing
     end
-    obj             = feasible ? JuMP.objective_value(model) : -1
-    obj_recomputed  = compute_mse(vsol[:,1], obs[:,end])
-    time            = JuMP.solve_time(model)
-    active          = feasible ? round(Int64, sum(JuMP.value.(y))) : 0
-    ysol            = feasible ? y_to_ysol(y, c, y_indexes, nodes, operA) : Dict()
 
+    arr_obj     = 1e+09 * ones(num_results)
+    arr_active  = zeros(num_results)
+    for i in num_results:-1:1
+        @assert JuMP.has_values(model; result = i)
+ 
+        ysol = get_ysol(y, y_indexes, nodes, operA; num_result=i)
+        csol = get_csol(c, nodes; num_result=i)
+        vsol, err = get_vsol(ysol, csol, obs)
+        arr_obj[i] = err ? 1e+09 : compute_mse(vsol[:,1], obs[:,end])
+        arr_active[i] = err ? 0 : length(ysol)
+    end
+
+    ## Now we know the best solution. Print and return it.
+    # b: the index of the best solution
+    b = argmin(arr_obj)
+
+    # Print the best solution
+    ysol = get_ysol(y, y_indexes, nodes, operA; num_result=b)
+    csol = get_csol(c, nodes; num_result=b)
+    vsol, err = get_vsol(ysol, csol, obs)
+    @info "Print the best solution\n" * print_tree(get_treesol(ysol, csol))
+    @debug "ysol" ysol
+    @debug "csol" csol
+    @debug "treesol" get_treesol(ysol, csol)
+
+    # Print the current solution
+    @debug print_y(y, y_indexes, nodes, operA)
+    'C' in operA && @debug print_c(c, y, nodes)
+    @debug print_v(v, nodes, 1:num_obs)
+    @debug print_obs(obs)
+    @debug print_num_oper(num_oper, operA)
+
+    # Print summary
     @info   "Print result\n" *
-    @sprintf("termination status    = %s\n",        termination_status(model)) *
-    @sprintf("obj                   = %12.6f\n",    obj) *
-    @sprintf("obj (recomputed)      = %12.6f\n",    obj_recomputed) *
-    @sprintf("bound                 = %12.6f\n",    JuMP.objective_bound(model)) *
-    @sprintf("time                  = %12.2f\n",    JuMP.solve_time(model)) *
-    @sprintf("# active node         = %12d\n",      active) *
-    @sprintf("relgap                = %12.6f\n",    JuMP.relative_gap(model)) *
-    @sprintf("bnbnode               = %12d\n",      JuMP.node_count(model))
+            @sprintf("time                  = %12.2f\n",    time) *
+            @sprintf("termination_status    = %s\n",        termination_status(model)) *
+            @sprintf("num_results           = %12d\n",      num_results) *
+            @sprintf("best_index            = %12d\n",      b) *
+            @sprintf("obj (by solver)       = %12.6f\n",    JuMP.objective_value(model)) *
+            @sprintf("obj (recomputed)      = %12.6f\n",    arr_obj[b]) *
+            @sprintf("objbound              = %12.6f\n",    JuMP.objective_bound(model)) *
+            @sprintf("relative_gap          = %12.6f\n",    JuMP.relative_gap(model)) *
+            @sprintf("bnbnode_count         = %12d\n",      JuMP.node_count(model)) *
+            @sprintf("active_count          = %12d\n",      arr_active[b])
+    
+    @info "Final result of MINLP()\n" * print_final_table(arr_obj, zeros(num_results), arr_active)
 
-    if feasible
-        @info print_tree(y, c, y_indexes, nodes, operA)
-        'C' in operA && @info print_c(c, y, nodes)
-        @debug print_y(y, y_indexes, nodes, operA)
-        @info print_v(v, nodes, 1:num_obs)
-        @debug print_obs(obs)
-        @info print_num_oper(num_oper, operA)
+    if print_all_solutions
+        for i in 1:num_results
+            if arr_active[i] > 0
+                @assert JuMP.has_values(model; result = i)
+        
+                ysol = get_ysol(y, y_indexes, nodes, operA; num_result=i)
+                csol = get_csol(c, nodes; num_result=i)
+                @info   "Print solution $i\n" *
+                        @sprintf("obj (recomputed)      = %12.6f\n",    arr_obj[i]) *
+                        @sprintf("active_count          = %12d\n",      arr_active[i]) *
+                        print_tree(get_treesol(ysol, csol))   
+            end
+        end
     end
 
-    feasible, obj_recomputed, time, active, y, y_indexes, ysol
+    return true, time, arr_obj[b], ysol, csol, vsol
 end

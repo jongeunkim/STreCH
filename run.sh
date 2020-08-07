@@ -6,8 +6,7 @@ cp run.sh ${DIR}run.sh
 cnt=0
 for seed in 1
 do
-	#for id in 1 2
-	for id in 115 #1 2 3 4 5 6 106 107 108 109 115
+	for id in 1 #2 3 4 5 6 106 107 108 109 115
 	do
 		for num_obs in 10
 		do
@@ -26,10 +25,14 @@ do
 					do
 						for stepsize in 3 4 5
 						do
-							ALGO=${model}_s${stepsize}_i${init_solve}
-							nohup julia main.jl $DIR$INS$TIME$ALGO $id $seed $num_obs $noise_level $time_limit $model $init_solve $stepsize > \
-								$DIR$INS$TIME$ALGO.console 2>&1 &
-							cnt=$(( cnt + 1 ))
+							for fixlevel in 1 2 3
+							do
+								ALGO=${model}_s${stepsize}_l${fixlevel}_i${init_solve}
+								nohup julia main.jl $DIR$INS$TIME$ALGO $id $seed $num_obs $noise_level $time_limit $model $init_solve $stepsize $fixlevel > \
+									$DIR$INS$TIME$ALGO.console 2>&1 &
+								cnt=$(( cnt + 1 ))
+								continue
+							done
 						done
 					done
 

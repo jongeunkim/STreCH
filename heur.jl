@@ -81,18 +81,10 @@ function update_num_oper_ub(max_active, num_oper_lb, stepsize)
     num_oper_ub
 end
 
-function print_final_table(arr_obj, arr_time, arr_active)
-    out = "    iter\t    time\t      obj\t   obj(e)\t   active\n"
-    
-    for i = 1:length(arr_obj)
-        out *= @sprintf("%12d\t%12.1f\t%12.6f\t%12.6e\t%12d\n", i, arr_time[i], arr_obj[i], arr_obj[i], arr_active[i])
-    end
 
-    out
-end
 
 function solve_Heuristic(obs, operators; 
-                        init_solve=1, time_limit=60, stepsize=2, obj_termination=1e-06,
+                        time_limit=60, stepsize=2, fixlevel=-1, init_solve=1, obj_termination=1e-06,
                         max_iter=100, max_depth=10, min_improvement=0.1)
 
     ## Initialization
@@ -112,23 +104,24 @@ function solve_Heuristic(obs, operators;
     ## Initial solve
     if init_solve == 1
         # ysol = 0 and ysol_dist=stepsize
-        feasible, obj, time, active, y, y_indexes, ysol = 
+
+        feasible, time, obj, ysol, csol, vsol = 
             solve_MINLP(nodes, obs, operators, ysol=Dict(), ysol_dist=stepsize, TIME_LIMIT=remaining_time)
     elseif init_solve == 2
         # Depth two tree problem
         nodes = Set(1:7)
-        feasible, obj, time, active, y, y_indexes, ysol = 
+        feasible, time, obj, ysol, csol, vsol = 
             solve_MINLP(nodes, obs, operators, TIME_LIMIT=remaining_time)
     end
     
     time_limit      -= time
     arr_obj         = [arr_obj; obj]
     arr_time        = [arr_time; time]
-    arr_active      = [arr_active; active]
+    arr_active      = [arr_active; length(ysol)]
     arr_ysol        = [arr_ysol; deepcopy(ysol)]
     arr_stepsize    = [arr_stepsize; stepsize]
 
-    while feasible && iter < max_iter && obj > obj_termination && remaining_time > 0
+    while obj > obj_termination + eps(Float64) && remaining_time > 0 && iter < max_iter  
         # Update for the next iteration
         iter += 1
         nodes       = update_nodes(ysol, max_depth, stepsize+stepsize_extra)
@@ -139,17 +132,19 @@ function solve_Heuristic(obs, operators;
         # @info "Heuristic Iteration $(iter)" nodes max_active num_oper_lb num_oper_ub
         @info "Heuristic Iteration $(iter)" ysol stepsize+stepsize_extra
 
-        # Solve        
-        feasible, obj, time, active, y, y_indexes, ysol = 
+        # Solve
+        ysol_dist       = stepsize + stepsize_extra
+        ysol_dist_min   = stepsize_extra > 0 ? stepsize+stepsize_extra : 0
+        feasible, time, obj, ysol, csol, vsol  = 
             solve_MINLP(nodes, obs, operators, 
                         # num_oper_lb=num_oper_lb, num_oper_ub=num_oper_ub,
-                        ysol=ysol, ysol_dist=stepsize+stepsize_extra,
+                        ysol=ysol, ysol_dist=ysol_dist, ysol_dist_min=ysol_dist_min, ysol_fix_level=fixlevel,
                         ABS_GAP=(1-min_improvement)*minimum(arr_obj),
                         TIME_LIMIT=remaining_time)
         remaining_time -= time       
         arr_obj         = [arr_obj; obj]
         arr_time        = [arr_time; arr_time[end] + time]
-        arr_active      = [arr_active; active]
+        arr_active      = [arr_active; length(ysol)]
         arr_stepsize    = [arr_stepsize; stepsize + stepsize_extra]
         arr_ysol        = [arr_ysol; deepcopy(ysol)]
 

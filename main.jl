@@ -23,6 +23,7 @@ function main(args)
     model           = args[i+=1]
     model_param1    = length(args) >= i+1 ? parse(Int, args[i+=1]) : 0
     model_param2    = length(args) >= i+1 ? parse(Int, args[i+=1]) : 0
+    model_param3    = length(args) >= i+1 ? parse(Int, args[i+=1]) : 0
 
     ## Dummy solve
     io = open("dummy.log", "w+")
@@ -52,15 +53,16 @@ function main(args)
         nodes = OrderedSet(1:(2^(max_depth+1)-1))
 
         global_logger(logger)
-        solve_MINLP(nodes, obs, operators, TIME_LIMIT=time_limit)
+        solve_MINLP(nodes, obs, operators, TIME_LIMIT=time_limit, print_all_solutions=true)
         close(io)
     elseif model == "heur"
         init_solve  = model_param1
         stepsize    = model_param2
+        fixlevel    = model_param3
 
         global_logger(logger)
         solve_Heuristic(obs, operators, 
-                        time_limit=time_limit, init_solve=init_solve, stepsize=stepsize, obj_termination=max(1e-06, 1.1*optval))
+                        time_limit=time_limit, init_solve=init_solve, stepsize=stepsize, obj_termination=optval)
         close(io)
     end
 end
