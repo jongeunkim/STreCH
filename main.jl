@@ -12,6 +12,18 @@ read_obs = (name) -> DelimitedFiles.readdlm(name * ".obs", header=true)
 #     solve_MINLP(nodes, obs, operators, TIME_LIMIT=time_limit)
 # end
 
+function write_result(FILENAME, obj, active, time, errmsg)
+    (DIR, FILE) = splitdir(FILENAME)
+    (DIR, dummy) = splitdir(DIR)
+    (DIR, dummy) = splitdir(DIR)
+
+    ## Write optimal values
+    io = open(DIR * "/result.txt", "a+")
+    write(io, @sprintf("%80s\t%12.6f\t%12.6e\t%12d\t%12.2f\t%24s\n", FILENAME, obj, obj, active, time, errmsg))
+    close(io)
+end
+
+
 function main(args)
     i = 0
     FILENAME        = args[i+=1]
@@ -37,7 +49,7 @@ function main(args)
 
     ## Observations
     obs, obs_info = obs_generator(id, seed, num_obs, noise_level)
-    optval = obs_optval(id, seed, num_obs, noise_level)
+    optval, temp = obs_optval(id, seed, num_obs, noise_level)
 
     ## Operators and operands
     # Binary:   + - * D
@@ -53,7 +65,9 @@ function main(args)
         nodes = OrderedSet(1:(2^(max_depth+1)-1))
 
         global_logger(logger)
-        solve_MINLP(nodes, obs, operators, TIME_LIMIT=time_limit, print_all_solutions=true)
+        feasible, optfeasible, time, obj, ysol, csol, vsol = solve_MINLP(nodes, obs, operators, TIME_LIMIT=time_limit, print_all_solutions=true)
+        active = feasible ? length(ysol) : 0
+        errmsg = optfeasible ? "" : "optinfeasible"
         close(io)
     elseif model == "heur"
         init_solve  = model_param1
@@ -61,10 +75,18 @@ function main(args)
         fixlevel    = model_param3
 
         global_logger(logger)
-        solve_Heuristic(obs, operators, 
-                        time_limit=time_limit, init_solve=init_solve, stepsize=stepsize, obj_termination=optval)
+        arr_obj, arr_time, arr_active = 
+            solve_Heuristic(obs, operators, 
+                            time_limit=time_limit, init_solve=init_solve, stepsize=stepsize, obj_termination=optval, subsampling=0.7)
+        b = argmin(arr_obj)
+        obj = arr_obj[b]
+        time = arr_time[end]
+        active = arr_active[b]
+        errmsg = ""
         close(io)
     end
+
+    write_result(FILENAME, obj, active, time, errmsg)
 end
 
 main(ARGS)
