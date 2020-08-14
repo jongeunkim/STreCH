@@ -36,6 +36,7 @@ function simple_functions(id, seed, num_obs)
     num_var = 0
     obs = Float64[]
     obs_info = ""
+    seed = seed + id
 
     if id == 1
         # depth = 2
@@ -162,6 +163,8 @@ end
 function MRA_functions(id, seed, num_obs)
     ## Table A.5 in Multivariate Rational Approximation paper
 
+    seed = seed + id
+
     if id == 106
         z_info = "MRA-A.5.6"
         num_var = 2
@@ -241,6 +244,8 @@ function MRA_functions(id, seed, num_obs)
 end
 
 function obsgen_from_csv(filename, number, num_obs=1, seed=1)
+    seed = seed + number
+
 
     # Read CSV file
     df = DataFrame(CSV.File(filename; silencewarnings=true))
@@ -264,7 +269,7 @@ function obsgen_from_csv(filename, number, num_obs=1, seed=1)
     formula = replace(formula, "ln" => "log")
 
     # Check if there is a non-valid expression
-    not_valid_expressions = ["exp", "log", "sin", "cos", "tan", "arcsin", "arccos", "arctan"]
+    not_valid_expressions = ["sin", "cos", "tan", "arcsin", "arccos", "arctan"]
     if any([!isnothing(findfirst(e, formula)) for e in not_valid_expressions])
         return false, nothing, nothing, formula, nothing, nothing
     end
@@ -400,12 +405,26 @@ function obs_optval(id, seed, num_obs, noise_level)
     mse, noise_level
 end
 
-function get_AIF_valid_ids()
-    valid_ids = []
-    for id in 201:300, seed in seeds, num_obs in num_obss, noise_level in [0]
-        obs, obs_info = obs_generator(id, seed, num_obs, noise_level, "")
+function get_ids(ids, condition_number)
+    ids_selected = []
+    for id in ids
+        obs, obs_info = obs_generator(id, 1, 1, 0, "")
+
         if !isnothing(obs)
-            push!(valid_ids, id)
+            isexplog    = any([!isnothing(findfirst("exp", obs_info)), !isnothing(findfirst("log", obs_info))])
+            num_var     = size(obs,2) - 1
+
+            if condition_number == 0
+                push!(valid_ids, id)
+            elseif condition_number == 1 && !isexplog && num_var <= 3
+                push!(valid_ids, id)
+            elseif condition_number == 2 && !isexplog && num_var >= 4
+                push!(valid_ids, id)
+            elseif condition_number == 3 && isexplog
+                push!(valid_ids, id)
+            else
+                nothing
+            end
         end
     end
     return valid_ids
@@ -433,10 +452,11 @@ num_obss = [10]
 #     end
 # end
 
-# valid_ids = get_AIF_valid_ids()
-# println(length(valid_ids))
-# println(join(valid_ids, " "))
-# ids = valid_ids
+# for condition_number in [0,1,2,3]
+#     ids = get_ids(201:300, condition_number)
+#     cnt = length(ids)
+#     println("condition_number=$(condition_number), cnt=$(cnt), ", join(ids, " "))
+# end
 
 # ## Write optimal values
 # io = open("obs/optval.log", "w+")
@@ -449,3 +469,5 @@ num_obss = [10]
 #     end
 # end
 # close(io)
+
+

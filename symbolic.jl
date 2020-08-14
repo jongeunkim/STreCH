@@ -132,7 +132,7 @@ function solve_MINLP(nodes, obs, operators;
                     ysol=nothing, ysol_dist=0, ysol_dist_min=0, ysol_fix_level=-1,
                     CONSTR_YDEF=2, CONSTR_VDEF=2,
                     CONSTR_REDUN=2, CONSTR_SYM=0, CONSTR_IMP=0,
-                    DISPLAY_VERBLEVEL=3, TIME_LIMIT=10, REL_GAP=0.00, ABS_GAP=0.00, PRESOLVE=-1,
+                    DISPLAY_VERBLEVEL=3, TIME_LIMIT=10, ABS_GAP=0.00, PRESOLVE=-1,
                     print_all_solutions=false)
 
     nodes = OrderedSet(sort(collect(nodes)))
@@ -177,11 +177,11 @@ function solve_MINLP(nodes, obs, operators;
     @debug "Create a model and set the solver's parameters (timelimit, gap, ...)"
     optimizer = SCIP.Optimizer(
                     display_verblevel=DISPLAY_VERBLEVEL,        # default = 4, 0:5
-                    limits_gap=REL_GAP,                         # default = 0
+                    limits_gap=0.0,                             # default = 0
                     limits_absgap=ABS_GAP,                      # default = 0
                     limits_time=TIME_LIMIT,     
-                    numerics_feastol=1e-10,                  # default = 1e-06
-                    numerics_epsilon=1e-10,
+                    numerics_feastol=1e-07,                     # default = 1e-06
+                    numerics_epsilon=1e-09,                     # default = 1e-09
                     presolving_maxrounds=PRESOLVE)              # default = -1                
     model = Model(() -> optimizer) 
 
@@ -556,5 +556,7 @@ function solve_MINLP(nodes, obs, operators;
         end
     end
 
-    return true, abs(JuMP.objective_value(model) - arr_obj[b]) < 1e-09, time, arr_obj[b], ysol, csol, vsol
+    relerr_recompute = abs(JuMP.objective_value(model)/arr_obj[b] - 1)
+
+    return true, relerr_recompute < 1e-03, time, arr_obj[b], ysol, csol, vsol
 end

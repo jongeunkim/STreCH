@@ -12,14 +12,13 @@ read_obs = (name) -> DelimitedFiles.readdlm(name * ".obs", header=true)
 #     solve_MINLP(nodes, obs, operators, TIME_LIMIT=time_limit)
 # end
 
-function write_result(FILENAME, obj, active, time, errmsg)
+function write_result(FILENAME, obj, active, time, niters, errmsg)
     (DIR, FILE) = splitdir(FILENAME)
-    (DIR, dummy) = splitdir(DIR)
     (DIR, dummy) = splitdir(DIR)
 
     ## Write optimal values
     io = open(DIR * "/result.txt", "a+")
-    write(io, @sprintf("%80s\t%12.6f\t%12.6e\t%12d\t%12.2f\t%24s\n", FILENAME, obj, obj, active, time, errmsg))
+    write(io, @sprintf("%80s\t%12.6f\t%12.6e\t%12d\t%12.2f\t%4d\t%24s\n", FILENAME, obj, obj, active, time, niters, errmsg))
     close(io)
 end
 
@@ -41,7 +40,7 @@ function main(args)
     io = open("dummy.log", "w+")
     logger = SimpleLogger(io, Logging.Info)
     global_logger(logger)
-    solve_MINLP(OrderedSet(1:3), rand(5,3), "+-*DC", TIME_LIMIT=10, DISPLAY_VERBLEVEL=0)
+    solve_MINLP(OrderedSet(1:3), rand(5,3), "+-*DC", TIME_LIMIT=10, DISPLAY_VERBLEVEL=1)
     close(io)
 
     ## Parameters
@@ -67,26 +66,26 @@ function main(args)
         global_logger(logger)
         feasible, optfeasible, time, obj, ysol, csol, vsol = solve_MINLP(nodes, obs, operators, TIME_LIMIT=time_limit, print_all_solutions=true)
         active = feasible ? length(ysol) : 0
+        niters = 0
         errmsg = optfeasible ? "" : "optinfeasible"
         close(io)
     elseif model == "heur"
         init_solve  = model_param1
-        stepsize    = model_param2
-        fixlevel    = model_param3
+        subsampling = 0.01 * model_param2
 
         global_logger(logger)
         arr_obj, arr_time, arr_active = 
-            solve_Heuristic(obs, operators, 
-                            time_limit=time_limit, init_solve=init_solve, stepsize=stepsize, obj_termination=optval, subsampling=0.7)
+            solve_Heuristic(obs, operators, time_limit=time_limit, init_solve=init_solve, subsampling=subsampling, obj_termination=optval)
         b = argmin(arr_obj)
         obj = arr_obj[b]
         time = arr_time[end]
         active = arr_active[b]
+        niters = length(arr_obj)
         errmsg = ""
         close(io)
     end
 
-    write_result(FILENAME, obj, active, time, errmsg)
+    write_result(FILENAME, obj, active, time, niters, errmsg)
 end
 
 main(ARGS)

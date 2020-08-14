@@ -86,7 +86,7 @@ function get_vsol(ysol, csol, obs)
                 vsol[i,n] = log(vsol[i,2*n+1])
             end
         else
-            println("Not a valid operator")
+            println("Not a valid operator at node $n")
         end
     end
 

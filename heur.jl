@@ -1,6 +1,8 @@
 include("symbolic.jl")
 include("utils.jl")
 
+const PARAMETERSET = [(fixlevel,smin,smax,time) for time in [300, 600, 1200, 2400, 4800, 9600] for (smin, smax) in [(0,3), (4,5), (6,7)] for fixlevel in [1,2]] 
+
 function remove_single_child(nodes)
     nodes = Set(nodes)
     updated = true
@@ -85,59 +87,48 @@ end
 
 
 function solve_Heuristic(obs, operators; 
-                        time_limit=60, maxtime_iter=300,
-                        stepsize=2, fixlevel=-1, init_solve=1, obj_termination=1e-06,
-                        max_iter=100, max_depth=10, min_improvement=0.01,
-                        subsampling=1)
+                        time_limit=60, obj_termination=1e-06,
+                        init_solve=1, subsampling=1,
+                        max_depth=5, min_improvement=0.01)
 
     ## Initialization
     iter            = 1
-    nodes           = remove_single_child(Set(1:max(7, stepsize)))
-    # max_active      = 3
+    nodes           = Set([])
     remaining_time  = time_limit
     b               = 1     # the index of the best solution 
+    p               = 1     # the index of the current parameter
     arr_obj         = []
     arr_time        = [] 
     arr_active      = []
     arr_ysol        = []
     arr_csol        = []
-    arr_stepsize    = []
-    # num_oper_lb     = Dict{Any,Int}()
-    # num_oper_ub     = Dict{Any,Int}('T' => max_active)
+    arr_p           = []
 
     ## Initial solve
-    ysol_dist       = stepsize
-    ysol_dist_min   = 0
-    if init_solve == 1
-        # ysol = 0 and ysol_dist=stepsize
+    nodes = Set(1:(2^(init_solve+1)-1))
+    TIME_LIMIT = remaining_time >= 301 ? 300 : 60
+    feasible, optfeasible, time, obj, ysol, csol, vsol = solve_MINLP(nodes, obs, operators, TIME_LIMIT=TIME_LIMIT)
 
-        feasible, optfeasible, time, obj, ysol, csol, vsol = 
-            solve_MINLP(nodes, obs, operators, ysol=Dict(), ysol_dist=ysol_dist, TIME_LIMIT=remaining_time)
-    elseif init_solve == 2
-        # Depth two tree problem
-        nodes = Set(1:7)
-        feasible, optfeasible, time, obj, ysol, csol, vsol = 
-            solve_MINLP(nodes, obs, operators, TIME_LIMIT=remaining_time)
-    end
     
-    time_limit      -= time
+    remaining_time -= time
     arr_obj         = [arr_obj; obj]
     arr_time        = [arr_time; time]
     arr_active      = [arr_active; length(ysol)]
     arr_ysol        = [arr_ysol; deepcopy(ysol)]
     arr_csol        = [arr_csol; deepcopy(csol)]
-    arr_stepsize    = [arr_stepsize; ysol_dist]
+    arr_p           = [arr_p; p]
 
-    while obj > obj_termination + eps(Float64) && remaining_time > 0 && iter < max_iter  
+    while obj > obj_termination + eps(Float64) && remaining_time > 0 
         # Update for the next iteration
         iter += 1
-        nodes       = update_nodes(ysol, max_depth, ysol_dist)
-        # num_oper_lb = update_num_oper_lb(y, y_indexes)
-        # max_active += stepsize
-        # num_oper_ub = update_num_oper_ub(max_active, num_oper_lb, stepsize)
 
-        # @info "Heuristic Iteration $(iter)" nodes max_active num_oper_lb num_oper_ub
-        @info "Heuristic Iteration $(iter)" ysol ysol_dist ysol_dist_min
+        # Set parameters
+        (ysol_fix_level, ysol_dist_min, ysol_dist, TIME_LIMIT) = PARAMETERSET[p] 
+        TIME_LIMIT = max(10, min(TIME_LIMIT, remaining_time))
+
+        nodes       = update_nodes(ysol, max_depth, ysol_dist)
+
+        @info "Heuristic Iteration $(iter)" ysol ysol_fix_level ysol_dist_min ysol_dist TIME_LIMIT
 
         # Subsampling
         if length(nodes) > 7
@@ -150,14 +141,14 @@ function solve_Heuristic(obs, operators;
             subobs          = obs
         end
 
+
         # Solve
         feasible, optfeasible, time, obj, ysol, csol, vsol  = 
             solve_MINLP(nodes, subobs, operators, 
-                        # num_oper_lb=num_oper_lb, num_oper_ub=num_oper_ub,
-                        ysol=ysol, ysol_dist=ysol_dist, ysol_dist_min=ysol_dist_min, ysol_fix_level=fixlevel,
+                        ysol=ysol, ysol_dist=ysol_dist, ysol_dist_min=ysol_dist_min, ysol_fix_level=ysol_fix_level,
                         ABS_GAP=(1-min_improvement)*minimum(arr_obj),
-                        TIME_LIMIT=max(10, min(maxtime_iter, remaining_time)),
-                        PRESOLVE=0)
+                        TIME_LIMIT=TIME_LIMIT,
+                        PRESOLVE=(TIME_LIMIT < 300 ? 0 : 1))
         remaining_time -= time
 
         # Recompute the obj for the whole observations
@@ -171,26 +162,23 @@ function solve_Heuristic(obs, operators;
         arr_obj         = [arr_obj; obj]
         arr_time        = [arr_time; arr_time[end] + time]
         arr_active      = [arr_active; feasible ? length(ysol) : 0]
-        arr_stepsize    = [arr_stepsize; ysol_dist]
+        arr_p           = [arr_p; p]
         arr_ysol        = [arr_ysol; feasible ? deepcopy(ysol) : nothing]
         arr_csol        = [arr_csol; feasible ? deepcopy(csol) : nothing]
 
         epsilon = 1e-12
-        if !feasible || arr_obj[end] >=  arr_obj[b] + epsilon
+        if !feasible || (arr_obj[end] >=  arr_obj[b] + epsilon)
             ysol            = arr_ysol[b]
-            ysol_dist       += 1
-            ysol_dist_min   = ysol_dist # 0
+            p              += 1
         elseif abs(arr_obj[end] - arr_obj[b]) < epsilon            
-            ysol_dist       += 1
-            ysol_dist_min   = ysol_dist # 0
+            p              += 1
         else
             b               = length(arr_obj)
-            ysol_dist       = stepsize
-            ysol_dist_min   = 0
+            p               = 1
         end
 
         @info "Final result\n" * print_final_table(arr_obj, arr_time, arr_active)
-        @info "Stepsize" arr_stepsize
+        @info "p" arr_p
     end
 
 
