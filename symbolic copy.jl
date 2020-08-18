@@ -7,7 +7,6 @@ using Printf
 using SCIP
 
 include("utils.jl")
-include("bounds.jl")
 
 EPSILON = 1e-12
 
@@ -131,10 +130,9 @@ end
 function solve_MINLP(nodes, obs, operators;
                     num_oper_lb=Dict(), num_oper_ub=Dict(),
                     ysol=nothing, ysol_dist=0, ysol_dist_min=0, ysol_fix_level=-1,
-                    csol=nothing,
                     CONSTR_YDEF=2, CONSTR_VDEF=2,
                     CONSTR_REDUN=2, CONSTR_SYM=0, CONSTR_IMP=0,
-                    DISPLAY_VERBLEVEL=3, TIME_LIMIT=10, ABS_GAP=0.00, PRESOLVE=-1, NODE_LIMIT=-1,
+                    DISPLAY_VERBLEVEL=3, TIME_LIMIT=10, ABS_GAP=0.00, PRESOLVE=-1,
                     print_all_solutions=false)
 
     nodes = OrderedSet(sort(collect(nodes)))
@@ -152,15 +150,15 @@ function solve_MINLP(nodes, obs, operators;
     operB       = intersect(operators, Set("+-*D"))
     operU       = intersect(operators, Set("REL"))
     operBU      = union(operB, operU)
-    operL       = union(intersect(operators, Set("CP")), indvars)
+    operL       = union(intersect(operators, Set('C')), indvars)
 
     ## Other parameters (bounds, weights, ...)
     v_lb = isempty(intersect(operators, Set("EL"))) ? -1e+03 : -1e+02 
     v_ub = isempty(intersect(operators, Set("EL"))) ? 1e+03 : 1e+02
-    v_lb, v_ub = get_vbounds(obs, operators)
-    @info "bounds on v" v_lb v_ub
-
-    (c_lb, c_ub, e_lb, e_ub) = (-2, 2, -1e+09, 1e+09)
+    c_lb = -2
+    c_ub = 2
+    e_lb = -1e+09
+    e_ub = 1e+09
     e_weight = ones(num_obs)
     lambda = 0
     num_active_ub = 7
@@ -181,8 +179,7 @@ function solve_MINLP(nodes, obs, operators;
                     display_verblevel=DISPLAY_VERBLEVEL,        # default = 4, 0:5
                     limits_gap=0.0,                             # default = 0
                     limits_absgap=ABS_GAP,                      # default = 0
-                    limits_time=TIME_LIMIT,  
-                    limits_nodes=NODE_LIMIT,   
+                    limits_time=TIME_LIMIT,     
                     numerics_feastol=1e-07,                     # default = 1e-06
                     numerics_epsilon=1e-09,                     # default = 1e-09
                     presolving_maxrounds=PRESOLVE)              # default = -1                
@@ -237,7 +234,7 @@ function solve_MINLP(nodes, obs, operators;
             end
         end
 
-        if ysol_dist >= 0
+        if ysol_dist > 0
             @info "Constrs for k-neighbors search" ysol ysol_dist ysol_dist_min
             @assert ysol_dist >= ysol_dist_min
             @assert ysol_dist_min >= 0
@@ -266,17 +263,7 @@ function solve_MINLP(nodes, obs, operators;
             end
         end
     end
-
-    if !isnothing(csol) 
-        @info "Fix csol" csol
-        for n in nodes
-            JuMP.is_integer(c[n]) ? JuMP.unset_integer(c[n]) : nothing
-            JuMP.has_lower_bound(c[n]) ? JuMP.delete_lower_bound(c[n]) : nothing
-            JuMP.has_upper_bound(c[n]) ? JuMP.delete_upper_bound(c[n]) : nothing
-            JuMP.fix(c[n], n in keys(csol) ? csol[n] : 0)
-        end
-    end
-
+    
     ## Constrs for defining e
     @debug "Constrs for defining e"
     @constraint(model, edef[i in 1:num_obs], e[i] == v[i,1] - obs[i,end])
@@ -329,7 +316,7 @@ function solve_MINLP(nodes, obs, operators;
     if CONSTR_REDUN == 1
         nothing
     elseif CONSTR_REDUN == 2
-        if 'C' in operA && !JuMP.is_integer(c[1])
+        if 'C' in operA && JuMP.is_integer(c[1])
             @constraints(model, begin
                 redun_cst_oper[n in nleaves], y[2*n,'C'] + y[2*n+1,'C'] <= 1
                 redun_cst_rhs[n in nleaves], y[2*n+1,'C'] <= y[n,'+'] + y[n,'*']
@@ -393,7 +380,6 @@ function solve_MINLP(nodes, obs, operators;
                     min(v_ub, exp(v_ub)) * ((n1,'E') in y_indexes ? y[n1,'E'] : 0) +
                     min(v_ub, log(v_ub)) * ((n1,'L') in y_indexes ? y[n1,'L'] : 0) +
                     c_ub * ((n1,'C') in y_indexes ? y[n1,'C'] : 0) +
-                    pi * ((n1,'P') in y_indexes ? y[n1,'P'] : 0) +
                     sum(obs[i,o] * y[n1,o] for o in indvars)
             v_indvars_lb[i in 1:num_obs, n1 in nodes],
                 v[i,n1] >= 
@@ -402,7 +388,6 @@ function solve_MINLP(nodes, obs, operators;
                     max(v_lb, exp(exp_rhs_lb)) * ((n1,'E') in y_indexes ? y[n1,'E'] : 0) +
                     max(v_lb, log(log_rhs_lb)) * ((n1,'L') in y_indexes ? y[n1,'L'] : 0) +
                     c_lb * ((n1,'C') in y_indexes ? y[n1,'C'] : 0) +
-                    pi * ((n1,'P') in y_indexes ? y[n1,'P'] : 0) +
                     sum(obs[i,o] * y[n1,o] for o in indvars)
         end)
 
@@ -467,7 +452,7 @@ function solve_MINLP(nodes, obs, operators;
         end
 
         if 'E' in operA
-            @NLconstraints(model, begin
+            @constraints(model, begin
                 v_exp_ub[i in 1:num_obs, n in nleaves],
                     v[i,n] - exp(v[i,2*n+1]) <= v_ub * (1 - y[n,'E'])
                 v_exp_lb[i in 1:num_obs, n in nleaves],
@@ -476,7 +461,7 @@ function solve_MINLP(nodes, obs, operators;
         end
 
         if 'L' in operA
-            @NLconstraints(model, begin
+            @constraints(model, begin
                 v_log_ub[i in 1:num_obs, n in nleaves],
                     exp(v[i,n]) - v[i,2*n+1] <= (exp(v_ub) - v_lb) * (1 - y[n,'L'])
                 v_log_lb[i in 1:num_obs, n in nleaves],
@@ -561,12 +546,12 @@ function solve_MINLP(nodes, obs, operators;
             if arr_active[i] > 0
                 @assert JuMP.has_values(model; result = i)
         
-                ysol1 = get_ysol(y, y_indexes, nodes, operA; num_result=i)
-                csol1 = get_csol(c, nodes; num_result=i)
+                ysol = get_ysol(y, y_indexes, nodes, operA; num_result=i)
+                csol = get_csol(c, nodes; num_result=i)
                 @info   "Print solution $i\n" *
                         @sprintf("obj (recomputed)      = %12.6f\n",    arr_obj[i]) *
                         @sprintf("active_count          = %12d\n",      arr_active[i]) *
-                        print_tree(get_treesol(ysol1, csol1))   
+                        print_tree(get_treesol(ysol, csol))   
             end
         end
     end

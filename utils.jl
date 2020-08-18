@@ -42,6 +42,8 @@ function get_vsol(ysol, csol, obs)
             vsol[:,n] = obs[:,o]
         elseif o == 'C'
             vsol[:,n] .= csol[n]
+        elseif o == 'P'
+            vsol[:,n] .= pi
         elseif o in '+'
             for i in 1:num_obs
                 vsol[i,n] = vsol[i,2*n] + vsol[i,2*n+1]

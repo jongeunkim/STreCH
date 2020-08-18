@@ -34,8 +34,8 @@ end
 function simple_functions(id, seed, num_obs)
     # Initialization
     num_var = 0
-    obs = Float64[]
-    obs_info = ""
+    obs = nothing
+    obs_info = nothing
     seed = seed + id
 
     if id == 1
@@ -163,6 +163,7 @@ end
 function MRA_functions(id, seed, num_obs)
     ## Table A.5 in Multivariate Rational Approximation paper
 
+    obs, obs_info = nothing, nothing
     seed = seed + id
 
     if id == 106
@@ -345,8 +346,8 @@ end
 
 function obs_generator(id, seed, num_obs, noise_level, filename="")
     # Initialization
-    obs = Float64[]
-    obs_info = ""
+    obs = nothing
+    obs_info = nothing
 
     if id <= 100
         obs, obs_info = simple_functions(id, seed, num_obs)
@@ -354,11 +355,10 @@ function obs_generator(id, seed, num_obs, noise_level, filename="")
         obs, obs_info = MRA_functions(id, seed, num_obs)
     elseif id <= 300
         obs, obs_info = AIF_functions(id, seed, num_obs)
-        if isnothing(obs)
-            return nothing, nothing
-        end
-    else
-        nothing
+    end
+
+    if isnothing(obs)
+        return nothing, nothing, nothing
     end
 
     # Add Gaussian noise
@@ -397,6 +397,10 @@ end
 
 function obs_optval(id, seed, num_obs, noise_level)
     obs_noiseless, obs_info, temp = obs_generator(id, seed, num_obs, 0)
+
+    if isnothing(obs_noiseless)
+        return nothing, nothing
+    end
 
     obs_noise, obs_info, noise_level = obs_generator(id, seed, num_obs, noise_level)
 
@@ -444,30 +448,26 @@ num_obss = [10]
 #     end
 # end
 
-# Generate obs
-# for id in ids, seed in seeds, num_obs in num_obss, noise_level in [0]
-#     obs, obs_info = obs_generator(id, seed, num_obs, noise_level, "obs/i$(id)_z$(noise_level).obs")
-#     if !isnothing(obs)
-#         push!(valid_ids, id)
-#     end
-# end
+# Generate obs and write optimal solutions
+if !isdir("obs/")
+    mkdir("obs/")
+end
+io = open("obs/optval.log", "w+")
+write(io, @sprintf("%8s\t%8s\t%8s\t%16s\t%16s\n", "id", "seed", "num_obs", "noise_level", "optval"))
+for id in 1:300, seed in [1], num_obs in [10]
+    noise_level = 0
+    obs, obs_info = obs_generator(id, seed, num_obs, noise_level, "obs/i$(id)_n$(num_obs)_z$(noise_level).obs")
+    for noise_level in [1e-04]
+        optval, noise_level = obs_optval(id, seed, num_obs, noise_level)
+        if !isnothing(optval)
+            write(io, @sprintf("%8d\t%8d\t%8d\t%16.1e\t%16.6e\n", id, seed, num_obs, noise_level, optval))
+        end
+    end
+end
+close(io)
 
 # for condition_number in [0,1,2,3]
 #     ids = get_ids(201:300, condition_number)
 #     cnt = length(ids)
 #     println("condition_number=$(condition_number), cnt=$(cnt), ", join(ids, " "))
 # end
-
-# ## Write optimal values
-# io = open("obs/optval.log", "w+")
-# write(io, @sprintf("%8s\t%8s\t%8s\t%16s\t%16s\n", "id", "seed", "num_obs", "noise_level", "optval"))
-# for id in ids, seed in seeds, num_obs in num_obss
-#     for noise_level in [1e-04] #[1e-01, 1e-02, 1e-03, 1e-04]
-#         optval, noise_level = obs_optval(id, seed, num_obs, noise_level)
-#         out = @sprintf("%8d\t%8d\t%8d\t%16.1e\t%16.6e\n", id, seed, num_obs, noise_level, optval)
-#         write(io, out)
-#     end
-# end
-# close(io)
-
-
