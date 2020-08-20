@@ -18,8 +18,8 @@ function write_result(FILENAME, obj, active, time, niters, errmsg)
     (DIR, INS) = splitdir(DIR)
 
     ## Write optimal values
-    io = open(DIR * "/result.txt", "a+")
-    write(io, @sprintf("%40s\t%20s\t%20s\t%12.6e\t%12d\t%12.2f\t%4d\t%24s\n", DIR, INS, FILE, obj, active, time, niters, errmsg))
+    io = open(DIR * "/result.csv", "a+")
+    write(io, @sprintf("%40s,\t%20s,\t%20s,\t%12.6e,\t%12d,\t%12.2f,\t%4d,\t%24s\n", DIR, INS, FILE, obj, active, time, niters, errmsg))
     close(io)
 end
 

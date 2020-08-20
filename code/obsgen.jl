@@ -434,12 +434,12 @@ function get_ids(ids, condition_number)
     return valid_ids
 end
 
-ids = []
-# ids = [ids; 1:6]
-# ids = [ids; [106, 107, 108, 109, 115]]
-ids = [ids; 201:300]
-seeds = [1]
-num_obss = [10]
+# ids = []
+# # ids = [ids; 1:6]
+# # ids = [ids; [106, 107, 108, 109, 115]]
+# ids = [ids; 201:300]
+# seeds = [1]
+# num_obss = [10]
 
 # for i in 91:100
 #     success, obs, z, formula = obsgen_from_csv("FeynmanEquations.csv", i, 1, 1)
@@ -449,22 +449,23 @@ num_obss = [10]
 # end
 
 # Generate obs and write optimal solutions
-if !isdir("obs/")
-    mkdir("obs/")
-end
-io = open("obs/optval.log", "w+")
-write(io, @sprintf("%8s\t%8s\t%8s\t%16s\t%16s\n", "id", "seed", "num_obs", "noise_level", "optval"))
-for id in 1:300, seed in [1], num_obs in [10]
-    noise_level = 0
-    obs, obs_info = obs_generator(id, seed, num_obs, noise_level, "obs/i$(id)_n$(num_obs)_z$(noise_level).obs")
-    for noise_level in [1e-04]
-        optval, noise_level = obs_optval(id, seed, num_obs, noise_level)
-        if !isnothing(optval)
-            write(io, @sprintf("%8d\t%8d\t%8d\t%16.1e\t%16.6e\n", id, seed, num_obs, noise_level, optval))
-        end
-    end
-end
-close(io)
+# DIR = "../obs/"
+# if !isdir(DIR)
+#     mkdir(DIR)
+# end
+# io = open(DIR * "optval.log", "w+")
+# write(io, @sprintf("%8s\t%8s\t%8s\t%16s\t%16s\n", "id", "seed", "num_obs", "noise_level", "optval"))
+# for id in 1:300, seed in [1], num_obs in [10]
+#     noise_level = 0
+#     obs, obs_info = obs_generator(id, seed, num_obs, noise_level, DIR * "i$(id)_n$(num_obs)_z$(noise_level).obs")
+#     for noise_level in [1e-04]
+#         optval, noise_level = obs_optval(id, seed, num_obs, noise_level)
+#         if !isnothing(optval)
+#             write(io, @sprintf("%8d\t%8d\t%8d\t%16.1e\t%16.6e\n", id, seed, num_obs, noise_level, optval))
+#         end
+#     end
+# end
+# close(io)
 
 # for condition_number in [0,1,2,3]
 #     ids = get_ids(201:300, condition_number)

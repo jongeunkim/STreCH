@@ -1,4 +1,5 @@
 /log_*
+/obs
 *.obs
 *.log
 nohup.out

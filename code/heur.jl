@@ -2,7 +2,7 @@ include("symbolic.jl")
 include("utils.jl")
 
 # const PARAMETERSET = [(fixlevel,smin,smax,time) for time in [300, 600, 1200, 2400, 4800, 9600] for (smin, smax) in [(0,3), (4,5), (6,7)] for fixlevel in [1,2]] 
-const PARAMETERSET = [(fixlevel,smin,smax,nodelimit) for nodelimit in [1000, 3000, 1e+04, 3e+04, 1e+05, 3e+05, 1e+06, 3e+06] for (smin, smax) in [(0,3), (4,5), (6,7)] for fixlevel in [1,2]] 
+const PARAMETERSET = [(fixlevel,smin,smax,nodelimit) for nodelimit in [10^i for i in 4:10] for (smin, smax) in [(0,3), (4,5), (6,7)] for fixlevel in [1,2]] 
 
 function remove_single_child(nodes)
     nodes = Set(nodes)
@@ -87,10 +87,14 @@ end
 
 
 
-function solve_Heuristic(obs, operators; 
-                        time_limit=60, obj_termination=1e-06,
-                        init_solve=1, subsampling=1,
-                        max_depth=4, min_improvement=0.01)
+function solve_Heuristic(obs, 
+                        operators; 
+                        time_limit=60, 
+                        obj_termination=1e-06,
+                        init_solve=1, 
+                        subsampling=1,
+                        max_depth=4, 
+                        min_improvement=0.01)
 
     ## Initialization
     iter            = 1
@@ -107,9 +111,8 @@ function solve_Heuristic(obs, operators;
 
     ## Initial solve
     nodes = Set(1:(2^(init_solve+1)-1))
-    # TIME_LIMIT = remaining_time >= 301 ? 300 : 60
-    TIME_LIMIT = remaining_time
-    NODE_LIMIT = 1000
+    # (TIME_LIMIT, NODE_LIMIT) = (min(0.1 * remaining_time, 300), -1)
+    (TIME_LIMIT, NODE_LIMIT) = (remaining_time, 10 * PARAMETERSET[1][4])
     feasible, optfeasible, time, obj, ysol, csol, vsol = solve_MINLP(nodes, obs, operators, TIME_LIMIT=TIME_LIMIT, NODE_LIMIT=NODE_LIMIT)
 
     
@@ -187,7 +190,6 @@ function solve_Heuristic(obs, operators;
         @info "Final result\n" * print_final_table(arr_obj, arr_time, arr_active)
         @info "p" arr_p
     end
-
 
     arr_obj, arr_time, arr_active
 end
