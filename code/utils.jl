@@ -133,7 +133,83 @@ function print_final_table(arr_obj, arr_time, arr_active)
     out
 end
 
-# println(get_nonleaves(1:7))
-# println(get_nonleaves(1:5))
-# println(get_nonleaves(1:3))
-# println(get_nonleaves(1:1))
+function remove_single_child(nodes)
+    nodes = Set(nodes)
+    updated = true
+    
+    while updated
+        updated = false
+        for n in collect(nodes)
+            if !isempty(intersect(nodes, Set([2*n, 2*n+1]))) && !issubset(Set([2*n, 2*n+1]), nodes)
+                setdiff!(nodes, Set([2*n, 2*n+1]))
+                updated = true
+                break
+            end
+        end
+    end
+
+    OrderedSet(sort(collect(nodes)))
+end
+
+function fill_single_child(nodes)
+    nodes = Set(nodes)
+    updated = true
+    
+    while updated
+        updated = false
+        for n in collect(nodes)
+            if !isempty(intersect(nodes, Set([2*n, 2*n+1]))) && !issubset(Set([2*n, 2*n+1]), nodes)
+                union!(nodes, Set([2*n, 2*n+1]))
+                updated = true
+                break
+            end
+        end
+    end
+
+    OrderedSet(sort(collect(nodes)))
+end
+
+function expand_nodes(nodes)
+    for n in collect(nodes)
+        union!(nodes, Set([n, 2*n, 2*n+1]))
+    end
+    OrderedSet(sort(collect(nodes)))
+end
+
+function update_nodes(ysol, max_depth, stepsize)
+    nodes = Set(keys(ysol))
+
+    for i in 1:Int(floor((stepsize-1)/2))
+        nodes = expand_nodes(nodes)
+    end
+
+    nodes = fill_single_child(nodes)
+
+    intersect!(nodes, Set(1:(2^(max_depth+1)-1)))
+ 
+    OrderedSet(sort(collect(nodes)))
+end
+
+function update_num_oper_lb(y, y_indexes)
+    num_oper_lb = Dict{Any, Int}()
+
+    for (n,o) in y_indexes
+        if JuMP.value(y[n,o]) > 0.5 && o != 'C'
+            num_oper_lb[o] = o in keys(num_oper_lb) ? num_oper_lb[o] + 1 : 1
+        end
+    end
+
+    num_oper_lb
+end
+
+function update_num_oper_ub(max_active, num_oper_lb, stepsize)
+    num_oper_ub = Dict{Any, Int}()
+
+    for (o, v) in num_oper_lb
+        num_oper_ub[o] = num_oper_lb[o] + stepsize
+    end
+
+    num_oper_ub['T'] = max_active
+
+    num_oper_ub
+end

@@ -1,6 +1,6 @@
 # sleep 12000
 
-TIMELIMIT=21600
+TIMELIMIT=300
 # SLEEPTIME=10
 
 DIR=../log_$(date +'%Y%m%d_%H%M%S')_$(hostname)_t${TIMELIMIT}/
@@ -12,7 +12,7 @@ cp -R ../code/ ${DIR}/code/
 cnt=0
 for seed in 1
 do
-	# for id in 237
+	for id in 237
 	# for id in 1
 	## My own and from rational approximation paper, 10 instances
 	# for id in 2 3 4 5 6 106 107 108 109 115
@@ -24,7 +24,7 @@ do
 	## 31 instances, AIF with at least four variables
 	# for id in 204 205 207 209 210 214 217 218 221 224 232 233 234 242 245 247 252 256 261 263 264 266 271 277 279 282 284 291 293 299 300
 	# for id in 204 205 207 209 210 214 217 218 221 224 232 233 234 242 245 247 
-	for id in 252 256 261 263 264 266 271 277 279 282 284 291 293 299 300
+	# for id in 252 256 261 263 264 266 271 277 279 282 284 291 293 299 300
 	## 10 instances, AIF with exp and/or log
 	# for id in 201 202 203 243 244 248 280 286 287 294
 	do

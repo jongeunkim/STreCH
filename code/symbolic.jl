@@ -9,8 +9,6 @@ using SCIP
 include("utils.jl")
 include("bounds.jl")
 
-const EPSILON = 1e-12
-
 function get_ysol(y, y_indexes, nodes, operA; num_result=1)
     ysol = SortedDict{Any,Any}()
 
