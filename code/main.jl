@@ -8,10 +8,6 @@ include("opttree.jl")
 ## Functions
 read_obs = (name) -> DelimitedFiles.readdlm(name * ".obs", header=true)
 
-# function solve_MINLP_with_logging(nodes, obs, operators, time_limit,
-#                                     logger1, logger2)
-#     solve_MINLP(nodes, obs, operators, TIME_LIMIT=time_limit)
-# end
 
 function write_result(FILENAME, obj, active, time, niters, errmsg)
     (DIR, FILE) = splitdir(FILENAME)
@@ -41,7 +37,7 @@ function main(args)
     io = open("dummy.log", "w+")
     logger = SimpleLogger(io, Logging.Info)
     global_logger(logger)
-    solve_MINLP(OrderedSet(1:3), rand(5,3), "+-*DC", TIME_LIMIT=10, DISPLAY_VERBLEVEL=1)
+    solve_MINLP(OrderedSet(1:3), rand(5,3), "+-*DC"; scip_time=10, scip_verblevel=1)
     close(io)
 
     ## Parameters
@@ -62,10 +58,17 @@ function main(args)
     logger = SimpleLogger(io, Logging.Info)
     if model == "minlp"
         max_depth = model_param1
+        if model_param2 == 1
+            formulation = "Cozad"
+        elseif model_param2 == 2
+            formulation = "New"
+        elseif model_param2 == 3
+            formulation = "New-NR"
+        end
         nodes = OrderedSet(1:(2^(max_depth+1)-1))
 
         global_logger(logger)
-        feasible, optfeasible, time, obj, ysol, csol, vsol = solve_MINLP(nodes, obs, operators, TIME_LIMIT=time_limit, print_all_solutions=true)
+        feasible, optfeasible, time, obj, ysol, csol, vsol = solve_MINLP(nodes, obs, operators, scip_time=time_limit, formulation=formulation, print_all_solutions=true)
         active = feasible ? length(ysol) : 0
         niters = 0
         errmsg = optfeasible ? "" : "optinfeasible"
@@ -78,7 +81,7 @@ function main(args)
             nodes = Set(keys(ysol))
 
             global_logger(logger)
-            feasible, optfeasible, time, obj, ysol, csol, vsol = solve_MINLP(nodes, obs, operators, TIME_LIMIT=time_limit, 
+            feasible, optfeasible, time, obj, ysol, csol, vsol = solve_MINLP(nodes, obs, operators, scip_time=time_limit, 
                 ysol=ysol, ysol_dist=0, ysol_dist_min=0, ysol_fix_level=0, csol=csol, print_all_solutions=true)
             active = feasible ? length(ysol) : 0
             niters = 0

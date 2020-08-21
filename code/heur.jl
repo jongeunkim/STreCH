@@ -11,7 +11,7 @@ function solve_Heuristic(obs,
                         min_improvement=0.01)
 
                         # PARAMETERSET = [(fixlevel,smin,smax,time) for time in [300, 600, 1200, 2400, 4800, 9600] for (smin, smax) in [(0,3), (4,5), (6,7)] for fixlevel in [1,2]]
-    PARAMETERSET = [(fixlevel,smin,smax,nodelimit) for nodelimit in [10^i for i in 4:10] for (smin, smax) in [(0,3), (4,5), (6,7)] for fixlevel in [1,2]] 
+    PARAMETERSET = [(fixlevel,smin,smax,nodelimit) for nodelimit in [10^i for i in 4:100] for (smin, smax) in [(0,3), (4,5), (6,7)] for fixlevel in [1,2]] 
 
     ## Initialization
     iter            = 1
@@ -30,7 +30,7 @@ function solve_Heuristic(obs,
     nodes = Set(1:(2^(init_solve+1)-1))
     # (TIME_LIMIT, NODE_LIMIT) = (min(0.1 * remaining_time, 300), -1)
     (TIME_LIMIT, NODE_LIMIT) = (remaining_time, 10 * PARAMETERSET[1][4])
-    feasible, optfeasible, time, obj, ysol, csol, vsol = solve_MINLP(nodes, obs, operators, TIME_LIMIT=TIME_LIMIT, NODE_LIMIT=NODE_LIMIT)
+    feasible, optfeasible, time, obj, ysol, csol, vsol = solve_MINLP(nodes, obs, operators, scip_time=TIME_LIMIT, scip_nodes=NODE_LIMIT)
 
     
     remaining_time -= time
@@ -46,16 +46,16 @@ function solve_Heuristic(obs,
         iter += 1
 
         # Set parameters
-        # (ysol_fix_level, ysol_dist_min, ysol_dist, TIME_LIMIT) = PARAMETERSET[p] 
+        # (ysol_fixlevel, ysol_dist_min, ysol_dist_max, TIME_LIMIT) = PARAMETERSET[p] 
         # TIME_LIMIT = max(10, min(TIME_LIMIT, remaining_time))
         # NODE_LIMIT = -1
-        # @info "Heuristic Iteration $(iter)" ysol ysol_fix_level ysol_dist_min ysol_dist TIME_LIMIT
+        # @info "Heuristic Iteration $(iter)" ysol ysol_fixlevel ysol_dist_min ysol_dist_max TIME_LIMIT
 
-        (ysol_fix_level, ysol_dist_min, ysol_dist, NODE_LIMIT) = PARAMETERSET[p] 
+        (ysol_fixlevel, ysol_dist_min, ysol_dist_max, NODE_LIMIT) = PARAMETERSET[p] 
         TIME_LIMIT = max(10, remaining_time)
-        @info "Heuristic Iteration $(iter)" ysol ysol_fix_level ysol_dist_min ysol_dist NODE_LIMIT
+        @info "Heuristic Iteration $(iter)" ysol ysol_fixlevel ysol_dist_min ysol_dist_max NODE_LIMIT
 
-        nodes       = update_nodes(ysol, max_depth, ysol_dist)
+        nodes       = update_nodes(ysol, max_depth, ysol_dist_max)
 
         # Subsampling
         if length(nodes) > 7
@@ -72,10 +72,11 @@ function solve_Heuristic(obs,
         # Solve
         feasible, optfeasible, time, obj, ysol, csol, vsol  = 
             solve_MINLP(nodes, subobs, operators, 
-                        ysol=ysol, ysol_dist=ysol_dist, ysol_dist_min=ysol_dist_min, ysol_fix_level=ysol_fix_level,
-                        ABS_GAP=(1-min_improvement)*minimum(arr_obj),
-                        TIME_LIMIT=TIME_LIMIT, NODE_LIMIT=NODE_LIMIT,
-                        PRESOLVE=(TIME_LIMIT < 300 ? 0 : 1))
+                        ysol=ysol, ysol_dist_min=ysol_dist_min, ysol_dist_max=ysol_dist_max, ysol_fixlevel=ysol_fixlevel,
+                        scip_absgap=(1-min_improvement)*minimum(arr_obj),
+                        scip_time=TIME_LIMIT, 
+                        scip_nodes=NODE_LIMIT,
+                        scip_presolve=(TIME_LIMIT < 300 ? 0 : 1))
         remaining_time -= time
 
         # Recompute the obj for the whole observations

@@ -1,3 +1,8 @@
+"""
+utils.jl
+Collection of utility functions
+"""
+
 using DataStructures
 
 function compute_mse(y_pred, y_true)
@@ -133,7 +138,32 @@ function print_final_table(arr_obj, arr_time, arr_active)
     out
 end
 
+function print_obs(obs)
+    (m,n) = size(obs)
+
+    out = "Print obs\n"
+    out *= "i\\var\t"
+    for j in 1:n-1
+        out *= @sprintf("x%d\t", j)
+    end
+    out *= @sprintf("z\n")
+    
+    for i in 1:m
+        out *= @sprintf("i=%2d\t", i)
+        for j in 1:n
+            out *= @sprintf("%.3f\t", obs[i,j])
+        end
+        out *= @sprintf("\n")
+    end   
+    
+    out
+end
+
 function remove_single_child(nodes)
+    """
+    Remove a sole child to make a full (proper) binary tree which every node has 0 or 2 children
+    """
+
     nodes = Set(nodes)
     updated = true
     
@@ -152,6 +182,10 @@ function remove_single_child(nodes)
 end
 
 function fill_single_child(nodes)
+    """
+    Add a missing child to make a full (proper) binary tree which every node has 0 or 2 children
+    """
+    
     nodes = Set(nodes)
     updated = true
     
@@ -170,6 +204,10 @@ function fill_single_child(nodes)
 end
 
 function expand_nodes(nodes)
+    """
+    Attach both children at each leaf
+    """
+
     for n in collect(nodes)
         union!(nodes, Set([n, 2*n, 2*n+1]))
     end
@@ -177,6 +215,10 @@ function expand_nodes(nodes)
 end
 
 function update_nodes(ysol, max_depth, stepsize)
+    """
+    Return nodes that is large enough to serach k-neighbor of ysol given max_depth and stepsize (distance)
+    """
+
     nodes = Set(keys(ysol))
 
     for i in 1:Int(floor((stepsize-1)/2))
@@ -190,26 +232,19 @@ function update_nodes(ysol, max_depth, stepsize)
     OrderedSet(sort(collect(nodes)))
 end
 
-function update_num_oper_lb(y, y_indexes)
-    num_oper_lb = Dict{Any, Int}()
+function print_error(vsol, obs)
+    """
+    Compare predicted values and true values and return string listing all errors
+    """
 
-    for (n,o) in y_indexes
-        if JuMP.value(y[n,o]) > 0.5 && o != 'C'
-            num_oper_lb[o] = o in keys(num_oper_lb) ? num_oper_lb[o] + 1 : 1
-        end
+    err     = vsol[:,1] - obs[:,end]
+    abserr  = abs.(err)
+
+    out = "i\terr\n"
+    for i in sortperm(abserr)
+        out *= @sprintf("%2d\t%12.6f\n", i, err[i])
     end
 
-    num_oper_lb
+    out
 end
 
-function update_num_oper_ub(max_active, num_oper_lb, stepsize)
-    num_oper_ub = Dict{Any, Int}()
-
-    for (o, v) in num_oper_lb
-        num_oper_ub[o] = num_oper_lb[o] + stepsize
-    end
-
-    num_oper_ub['T'] = max_active
-
-    num_oper_ub
-end

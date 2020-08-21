@@ -85,27 +85,6 @@ function print_c(c, y, nodes)
     out
 end
 
-function print_obs(obs)
-    (m,n) = size(obs)
-
-    out = "Print obs\n"
-    out *= "i\\var\t"
-    for j in 1:n-1
-        out *= @sprintf("x%d\t", j)
-    end
-    out *= @sprintf("z\n")
-    
-    for i in 1:m
-        out *= @sprintf("i=%2d\t", i)
-        for j in 1:n
-            out *= @sprintf("%.3f\t", obs[i,j])
-        end
-        out *= @sprintf("\n")
-    end   
-    
-    out
-end
-
 function print_num_oper(num_oper, operA)
     out = "Print num_oper\n"
     for o in operA
@@ -114,26 +93,61 @@ function print_num_oper(num_oper, operA)
     out
 end
 
-function print_error(vsol, obs)
-    err     = vsol[:,1] - obs[:,end]
-    abserr  = abs.(err)
-
-    out = "i\terr\n"
-    for i in sortperm(abserr)
-        out *= @sprintf("%2d\t%12.6f\n", i, err[i])
-    end
-
-    out
-end
-
 function solve_MINLP(nodes, obs, operators;
-                    num_oper_lb=Dict(), num_oper_ub=Dict(),
-                    ysol=nothing, ysol_dist=0, ysol_dist_min=0, ysol_fix_level=-1,
+                    print_all_solutions=false,
+                    formulation="New-NR",
+                    integer_constant=true,
+                    ysol=nothing, 
+                    ysol_dist_max=0, 
+                    ysol_dist_min=0, 
+                    ysol_fixlevel=-1,
                     csol=nothing,
-                    CONSTR_YDEF=2, CONSTR_VDEF=2,
-                    CONSTR_REDUN=2, CONSTR_SYM=0, CONSTR_IMP=0,
-                    DISPLAY_VERBLEVEL=3, TIME_LIMIT=10, ABS_GAP=0.00, PRESOLVE=-1, NODE_LIMIT=-1,
-                    print_all_solutions=false)
+                    scip_verblevel=3,
+                    scip_time=10.0,
+                    scip_absgap=0.0,
+                    scip_nodes=-1,
+                    scip_presolve=-1)
+                    # print_all_solutions::Bool=false,
+                    # formulation::String="New-NR",
+                    # integer_constant::Bool=true,
+                    # ysol::Dict=nothing, 
+                    # ysol_dist_max::Int=0, 
+                    # ysol_dist_min::Int=0, 
+                    # ysol_fixlevel::Int=-1,
+                    # csol::Dict=nothing,
+                    # scip_verblevel::Int=3,
+                    # scip_time::Real=10.0,
+                    # scip_absgap::Real=0.0,
+                    # scip_nodes::Int=-1,
+                    # scip_presolve::Int=-1)
+    """
+    Solve a MINLP for symbolic regression.
+    nodes:      set of nodes that we consider
+    obs:        observations in array, assume that the last column is the dependent variable.
+    operators:  set of operators that we consider
+    
+    print_all_solutions: print all solutions found in the log file (both optimal and nonoptimal) 
+
+    formulation:    "Cozad":    Cozad's formulation with no optional cut such as redundancy elimination and no symmetry breacking
+                    "New":      New formulation with no optional cut
+                    "-CR":      Add Cozad's redundancy elimination cut
+                    "-NR":      Add new redundancy elimination cut
+        * I have not implemented symmetry breaking and implication constarint yet.
+
+    (matters if ysol != nothing)
+    ysol:                           solution of variable y in dict format (ysol[`nodeid`] = `operator`)
+    ysol_dist_min, ysol_dist_max:   min/max distance from the current solution y
+    ysol_fixlevel:                  if value is 0, fix all y solutions,
+                                    if value is 1, fix all nonleaves,
+                                    ... as value increases, fix less number of nodes 
+    
+    (matters if csol != nothing)
+    csol:   solution of variable c in dict format (csol[`nodeid`] = `constant value`)
+            if it is given, we fix csol
+
+    scip_*: scip parameters 
+    """
+    
 
     nodes = OrderedSet(sort(collect(nodes)))
     @info   "Print nodes & operators\n" *
@@ -176,14 +190,13 @@ function solve_MINLP(nodes, obs, operators;
     ## Create a model and set the solver's parameters (timelimit, gap, ...)
     @debug "Create a model and set the solver's parameters (timelimit, gap, ...)"
     optimizer = SCIP.Optimizer(
-                    display_verblevel=DISPLAY_VERBLEVEL,        # default = 4, 0:5
-                    limits_gap=0.0,                             # default = 0
-                    limits_absgap=ABS_GAP,                      # default = 0
-                    limits_time=TIME_LIMIT,  
-                    limits_nodes=NODE_LIMIT,   
+                    display_verblevel=scip_verblevel,           # default = 4, 0:5
+                    limits_absgap=scip_absgap,                  # default = 0
+                    limits_time=scip_time,  
+                    limits_nodes=scip_nodes,   
+                    presolving_maxrounds=scip_presolve,         # default = -1                
                     numerics_feastol=1e-07,                     # default = 1e-06
-                    numerics_epsilon=1e-09,                     # default = 1e-09
-                    presolving_maxrounds=PRESOLVE)              # default = -1                
+                    numerics_epsilon=1e-09)                     # default = 1e-09
     model = Model(() -> optimizer) 
 
     ## Decision variables
@@ -197,7 +210,11 @@ function solve_MINLP(nodes, obs, operators;
     @variable(model, v_lb <= v[1:num_obs, nodes] <= v_ub)
 
     # c: constant value at node
-    @variable(model, c_lb <= c[nodes] <= c_ub, Int)
+    if integer_constant
+        @variable(model, c_lb <= c[nodes] <= c_ub, Int)
+    else
+        @variable(model, c_lb <= c[nodes] <= c_ub)
+    end
 
     # e: error = prediction - true
     @variable(model, e_lb <= e[1:num_obs] <= e_ub)
@@ -213,17 +230,6 @@ function solve_MINLP(nodes, obs, operators;
 
     ## Constrs for control
     @debug "Constrs for control"
-    if 'T' in keys(num_oper_ub)
-        @constraint(model, limit_num_active_ub, sum(y) <= num_oper_ub['T'])
-    end
-    if 'T' in keys(num_oper_lb)
-        @constraint(model, limit_num_active_lb, sum(y) >= num_oper_lb['T'])
-    end
-    @constraint(model, limit_num_oper_ub[o in operA; o in keys(num_oper_ub)], 
-        num_oper[o] <= num_oper_ub[o])
-    @constraint(model, limit_num_oper_lb[o in operA; o in keys(num_oper_lb)], 
-        num_oper[o] >= num_oper_lb[o])
-
     ## Constrs for k-neighbors search
     if !isnothing(ysol) 
         @info "Set start value" ysol
@@ -235,21 +241,21 @@ function solve_MINLP(nodes, obs, operators;
             end
         end
 
-        if ysol_dist >= 0
-            @info "Constrs for k-neighbors search" ysol ysol_dist ysol_dist_min
-            @assert ysol_dist >= ysol_dist_min
+        if ysol_dist_max >= 0
+            @info "Constrs for k-neighbors search" ysol ysol_dist_max ysol_dist_min
+            @assert ysol_dist_max >= ysol_dist_min
             @assert ysol_dist_min >= 0
             @constraint(model, ysol_neighbors, 
                 ysol_dist_min <=
                 sum( (1-y[n,ysol[n]]) for n in nodes if n in keys(ysol) ) + 
-                sum( sum(y[n,o] for o in operA if (n,o) in y_indexes) for n in nodes if !(n in keys(ysol)) ) <= ysol_dist)
+                sum( sum(y[n,o] for o in operA if (n,o) in y_indexes) for n in nodes if !(n in keys(ysol)) ) <= ysol_dist_max)
         end
 
-        if ysol_fix_level >= 0
-            @info "Fix ysol level = $(ysol_fix_level)"
+        if ysol_fixlevel >= 0
+            @info "Fix ysol level = $(ysol_fixlevel)"
 
             nodes_fixed = keys(ysol)
-            for i in 1:ysol_fix_level
+            for i in 1:ysol_fixlevel
                 nodes_fixed = get_nonleaves(nodes_fixed)
             end
 
@@ -280,8 +286,8 @@ function solve_MINLP(nodes, obs, operators;
     @constraint(model, edef[i in 1:num_obs], e[i] == v[i,1] - obs[i,end])
 
     ## Constrs for defining y
-    @debug "Constrs for defining y (CONSTR_YDEF = $(CONSTR_YDEF))"
-    if CONSTR_YDEF == 1 
+    if occursin("Cozad", formulation)
+        @debug "Constrs for defining y (Cozad) $(formulation)"
         @constraints(model, begin
             # [Cozad]-(1d) at most one operator is active
             active_at_most[n1 in nodes], sum(y[n,o] for (n,o) in y_indexes if n == n1) <= 1
@@ -304,7 +310,8 @@ function solve_MINLP(nodes, obs, operators;
                 sum(y[n1,o] for o in union(operU, operL)) <=
                 1 - sum(y[n,o] for (n,o) in y_indexes if n == 2*n1)
         end)
-    elseif CONSTR_YDEF == 2
+    elseif occursin("New", formulation)
+        @debug "Constrs for defining y (New) $(formulation)"
         @constraints(model, begin
             # [Cozad]-(1d) at most one operator is active
             active_at_most[n1 in nodes], sum(y[n,o] for (n,o) in y_indexes if n == n1) <= 1
@@ -323,16 +330,19 @@ function solve_MINLP(nodes, obs, operators;
     end
 
     ## Constrs to remove redundancy
-    @debug "Constrs to remove redundancy (CONSTR_REDUN = $(CONSTR_REDUN))"
-    if CONSTR_REDUN == 1
+    if occursin("-CR", formulation)
+        @debug "Constrs to remove redundancy (Cozad) $(formulation)"
         nothing
-    elseif CONSTR_REDUN == 2
+    elseif occursin("-NR", formulation)
+        @debug "Constrs to remove redundancy (New) $(formulation)"
+
         if 'C' in operA && !JuMP.is_integer(c[1])
             @constraints(model, begin
                 redun_cst_oper[n in nleaves], y[2*n,'C'] + y[2*n+1,'C'] <= 1
                 redun_cst_rhs[n in nleaves], y[2*n+1,'C'] <= y[n,'+'] + y[n,'*']
             end)
         end
+
         if issubset(Set("EL"), operA)
             @constraints(model, begin
                 redun_explog[n in nleaves; 4*n+3 in nodes], y[n,'E'] + y[2*n+1,'L'] <= 1
@@ -379,39 +389,63 @@ function solve_MINLP(nodes, obs, operators;
 
 
     ## Constrs for defining v
-    @debug "Constrs for defining v (CONSTR_VDEF = $(CONSTR_VDEF))"
-    if CONSTR_VDEF == 1
-        nothing
-    elseif CONSTR_VDEF == 2
-        @constraints(model, begin
-            v_indvars_ub[i in 1:num_obs, n1 in nodes],
-                v[i,n1] <= 
-                    v_ub * sum(y[n,o] for (n,o) in y_indexes if n==n1 && o in operB) +
-                    min(v_ub, sqrt(v_ub)) * ((n1,'R') in y_indexes ? y[n1,'R'] : 0) +
-                    min(v_ub, exp(v_ub)) * ((n1,'E') in y_indexes ? y[n1,'E'] : 0) +
-                    min(v_ub, log(v_ub)) * ((n1,'L') in y_indexes ? y[n1,'L'] : 0) +
-                    c_ub * ((n1,'C') in y_indexes ? y[n1,'C'] : 0) +
-                    pi * ((n1,'P') in y_indexes ? y[n1,'P'] : 0) +
-                    sum(obs[i,o] * y[n1,o] for o in indvars)
-            v_indvars_lb[i in 1:num_obs, n1 in nodes],
-                v[i,n1] >= 
-                    v_lb * sum(y[n,o] for (n,o) in y_indexes if n==n1 && o in operB) +
-                    max(v_lb, sqrt(sqrt_rhs_lb)) * ((n1,'R') in y_indexes ? y[n1,'R'] : 0) +
-                    max(v_lb, exp(exp_rhs_lb)) * ((n1,'E') in y_indexes ? y[n1,'E'] : 0) +
-                    max(v_lb, log(log_rhs_lb)) * ((n1,'L') in y_indexes ? y[n1,'L'] : 0) +
-                    c_lb * ((n1,'C') in y_indexes ? y[n1,'C'] : 0) +
-                    pi * ((n1,'P') in y_indexes ? y[n1,'P'] : 0) +
-                    sum(obs[i,o] * y[n1,o] for o in indvars)
-        end)
+    if occursin("Cozad", formulation) || occursin("New", formulation)
+        if occursin("Cozad", formulation)
+            @debug "Constrs for defining v (Cozad) $(formulation)"
 
-        if 'C' in operA
             @constraints(model, begin
-                v_cst_ub[i in 1:num_obs, n in nodes],
-                    v[i,n] - c[n] <= (v_ub - c_lb) * (1 - y[n,'C'])
-                v_cst_lb[i in 1:num_obs, n in nodes],
-                    v[i,n] - c[n] >= (v_lb - c_ub) * (1 - y[n,'C'])
+                v_indvars_ub[i in 1:num_obs, n in nodes, o in indvars], v[i,n] - obs[i,o] <= (v_ub - obs[i,o]) * (1 - y[n,o])
+                v_indvars_lb[i in 1:num_obs, n in nodes, o in indvars], v[i,n] - obs[i,o] >= (v_lb - obs[i,o]) * (1 - y[n,o])
             end)
+
+            if 'P' in operA
+                @constraints(model, begin
+                    v_pi_ub[i in 1:num_obs, n in nodes], v[i,n] - pi <= (v_ub - v_lb) * (1 - y[n,'P'])
+                    v_pi_lb[i in 1:num_obs, n in nodes], v[i,n] - pi >= (v_lb - v_ub) * (1 - y[n,'P'])
+                end)
+            end
+
+            if 'C' in operA
+                @constraints(model, begin
+                    v_cst_ub[i in 1:num_obs, n in nodes], v[i,n] - c[n] <= (v_ub - c_lb) * (1 - y[n,'C'])
+                    v_cst_lb[i in 1:num_obs, n in nodes], v[i,n] - c[n] >= (v_lb - c_ub) * (1 - y[n,'C'])
+                end)
+            end
+
+        elseif occursin("New", formulation)
+            @debug "Constrs for defining v (New) $(formulation)"
+
+            @constraints(model, begin
+                v_indvars_ub[i in 1:num_obs, n1 in nodes],
+                    v[i,n1] <= 
+                        v_ub * sum(y[n,o] for (n,o) in y_indexes if n==n1 && o in operB) +
+                        min(v_ub, sqrt(v_ub)) * ((n1,'R') in y_indexes ? y[n1,'R'] : 0) +
+                        min(v_ub, exp(v_ub)) * ((n1,'E') in y_indexes ? y[n1,'E'] : 0) +
+                        min(v_ub, log(v_ub)) * ((n1,'L') in y_indexes ? y[n1,'L'] : 0) +
+                        c_ub * ((n1,'C') in y_indexes ? y[n1,'C'] : 0) +
+                        pi * ((n1,'P') in y_indexes ? y[n1,'P'] : 0) +
+                        sum(obs[i,o] * y[n1,o] for o in indvars)
+                v_indvars_lb[i in 1:num_obs, n1 in nodes],
+                    v[i,n1] >= 
+                        v_lb * sum(y[n,o] for (n,o) in y_indexes if n==n1 && o in operB) +
+                        max(v_lb, sqrt(sqrt_rhs_lb)) * ((n1,'R') in y_indexes ? y[n1,'R'] : 0) +
+                        max(v_lb, exp(exp_rhs_lb)) * ((n1,'E') in y_indexes ? y[n1,'E'] : 0) +
+                        max(v_lb, log(log_rhs_lb)) * ((n1,'L') in y_indexes ? y[n1,'L'] : 0) +
+                        c_lb * ((n1,'C') in y_indexes ? y[n1,'C'] : 0) +
+                        pi * ((n1,'P') in y_indexes ? y[n1,'P'] : 0) +
+                        sum(obs[i,o] * y[n1,o] for o in indvars)
+            end)
+
+            if 'C' in operA
+                @constraints(model, begin
+                    v_cst_ub[i in 1:num_obs, n in nodes],
+                        v[i,n] - c[n] <= (v_ub - c_lb) * (1 - y[n,'C'])
+                    v_cst_lb[i in 1:num_obs, n in nodes],
+                        v[i,n] - c[n] >= (v_lb - c_ub) * (1 - y[n,'C'])
+                end)
+            end
         end
+
 
         if '+' in operA
             @constraints(model, begin
@@ -481,10 +515,6 @@ function solve_MINLP(nodes, obs, operators;
                     exp(v[i,n]) - v[i,2*n+1] >= (-v_ub) * (1 - y[n,'L'])
             end)
         end
-
-
-    else
-        nothing
     end   
 
     @debug "Optimize!"
@@ -572,4 +602,5 @@ function solve_MINLP(nodes, obs, operators;
     relerr_recompute = abs(JuMP.objective_value(model)/arr_obj[b] - 1)
 
     return true, relerr_recompute < 1e-03, time, arr_obj[b], ysol, csol, vsol
+    # return false, nothing, nothing, nothing, nothing, nothing, nothing
 end

@@ -1,6 +1,6 @@
 # sleep 12000
 
-TIMELIMIT=300
+TIMELIMIT=60
 # SLEEPTIME=10
 
 DIR=../log_$(date +'%Y%m%d_%H%M%S')_$(hostname)_t${TIMELIMIT}/
@@ -36,7 +36,7 @@ do
 				mkdir -p $DIR$INS
 
 				model="heur"
-				for max_depth in 3 4 5
+				for max_depth in 3 #4 5
 				do
 					for init_solve in 2 # 1 2 3 4
 					do
@@ -48,11 +48,14 @@ do
 				done
 
 				model="minlp"
-				for max_depth in 2 3 4
+				for max_depth in 2 #3 4
 				do
-					ALGO=${model}_D${max_depth}
-					nohup julia main.jl $DIR$INS$ALGO $id $seed $num_obs $noise_level $TIMELIMIT $model $max_depth > $DIR$INS$ALGO.console 2>&1 &
-					cnt=$(( cnt + 1 ))
+					for formulation in 1 2 3
+					do
+						ALGO=${model}_D${max_depth}_F-${formulation}
+						nohup julia main.jl $DIR$INS$ALGO $id $seed $num_obs $noise_level $TIMELIMIT $model $max_depth $formulation > $DIR$INS$ALGO.console 2>&1 &
+						cnt=$(( cnt + 1 ))
+					done
 				done
 
 				# model="optcheck"
