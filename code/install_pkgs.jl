@@ -1,6 +1,6 @@
 using Pkg
 
-pkgs = ["JuMP", "SCIP", "DataStructures"]
+pkgs = ["CSV", "DataFrames", "DataStructures", "JuMP", "SCIP"]
 Pkg.add(pkgs)
 
 Pkg.status()
