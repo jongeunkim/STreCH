@@ -61,8 +61,10 @@ function main(args)
         if model_param2 == 1
             formulation = "Cozad"
         elseif model_param2 == 2
-            formulation = "New"
+            formulation = "Cozad-CR"
         elseif model_param2 == 3
+            formulation = "New"
+        elseif model_param2 == 4
             formulation = "New-NR"
         end
         nodes = OrderedSet(1:(2^(max_depth+1)-1))

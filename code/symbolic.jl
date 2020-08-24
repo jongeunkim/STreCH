@@ -96,7 +96,7 @@ end
 function solve_MINLP(nodes, obs, operators;
                     print_all_solutions=false,
                     formulation="New-NR",
-                    integer_constant=true,
+                    integer_constant=false,
                     ysol=nothing, 
                     ysol_dist_max=0, 
                     ysol_dist_min=0, 
@@ -107,19 +107,6 @@ function solve_MINLP(nodes, obs, operators;
                     scip_absgap=0.0,
                     scip_nodes=-1,
                     scip_presolve=-1)
-                    # print_all_solutions::Bool=false,
-                    # formulation::String="New-NR",
-                    # integer_constant::Bool=true,
-                    # ysol::Dict=nothing, 
-                    # ysol_dist_max::Int=0, 
-                    # ysol_dist_min::Int=0, 
-                    # ysol_fixlevel::Int=-1,
-                    # csol::Dict=nothing,
-                    # scip_verblevel::Int=3,
-                    # scip_time::Real=10.0,
-                    # scip_absgap::Real=0.0,
-                    # scip_nodes::Int=-1,
-                    # scip_presolve::Int=-1)
     """
     Solve a MINLP for symbolic regression.
     nodes:      set of nodes that we consider
@@ -330,27 +317,32 @@ function solve_MINLP(nodes, obs, operators;
     end
 
     ## Constrs to remove redundancy
-    if occursin("-CR", formulation)
-        @debug "Constrs to remove redundancy (Cozad) $(formulation)"
-        nothing
-    elseif occursin("-NR", formulation)
-        @debug "Constrs to remove redundancy (New) $(formulation)"
-
-        if 'C' in operA && !JuMP.is_integer(c[1])
-            @constraints(model, begin
-                redun_cst_oper[n in nleaves], y[2*n,'C'] + y[2*n+1,'C'] <= 1
-                redun_cst_rhs[n in nleaves], y[2*n+1,'C'] <= y[n,'+'] + y[n,'*']
-            end)
-        end
-
+    if occursin("-CR", formulation) || occursin("-NR", formulation)
+        # no exp(log(x)) or log(exp(x))
         if issubset(Set("EL"), operA)
             @constraints(model, begin
                 redun_explog[n in nleaves; 4*n+3 in nodes], y[n,'E'] + y[2*n+1,'L'] <= 1
                 redun_logexp[n in nleaves; 4*n+3 in nodes], y[n,'L'] + y[2*n+1,'E'] <= 1
             end)
         end
-    else
-        nothing
+
+        if 'C' in operA && !JuMP.is_integer(c[1])
+            # no operation of two constants and no 
+            @constraint(model, redun_cst_oper[n in nleaves], y[2*n,'C'] + y[2*n+1,'C'] <= 1)
+
+            # no x-cst, x/cst, and no unary operation with a constant
+            if occursin("-CR", formulation)
+                @debug "Constrs to remove redundancy (Cozad version) $(formulation)"
+                @constraints(model, begin
+                    redun_cst_unary[n in nleaves], y[2*n+1,'C'] + sum(y[n,o] for (n,o) in y_indexes if o in operU) <= 1
+                    redun_cst_minus[n in nleaves], y[2*n+1,'C'] + sum(y[n,o] for (n,o) in y_indexes if o == '-') <= 1
+                    redun_cst_div[n in nleaves], y[2*n+1,'C'] + sum(y[n,o] for (n,o) in y_indexes if o == 'D') <= 1
+                end)
+            elseif occursin("-NR", formulation)
+                @debug "Constrs to remove redundancy (New version) $(formulation)"
+                @constraint(model, redun_cst_rhs[n in nleaves], y[2*n+1,'C'] <= y[n,'+'] + y[n,'*'])
+            end
+        end
     end
 
     ## Constrs for defining domain bounds
@@ -392,6 +384,11 @@ function solve_MINLP(nodes, obs, operators;
     if occursin("Cozad", formulation) || occursin("New", formulation)
         if occursin("Cozad", formulation)
             @debug "Constrs for defining v (Cozad) $(formulation)"
+
+            @constraints(model, begin
+                v_inactive_ub[i in 1:num_obs, n in nodes], v[i,n] <= v_ub * sum(y[n1,o] for (n1,o) in y_indexes if n1 == n)
+                v_inactive_lb[i in 1:num_obs, n in nodes], v[i,n] >= v_lb * sum(y[n1,o] for (n1,o) in y_indexes if n1 == n)
+            end)
 
             @constraints(model, begin
                 v_indvars_ub[i in 1:num_obs, n in nodes, o in indvars], v[i,n] - obs[i,o] <= (v_ub - obs[i,o]) * (1 - y[n,o])
