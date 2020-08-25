@@ -6,8 +6,6 @@ include("heur.jl")
 include("opttree.jl")
 
 ## Functions
-read_obs = (name) -> DelimitedFiles.readdlm(name * ".obs", header=true)
-
 
 function write_result(FILENAME, obj, active, time, niters, errmsg)
     (DIR, FILE) = splitdir(FILENAME)

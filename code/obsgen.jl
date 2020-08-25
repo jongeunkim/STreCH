@@ -245,8 +245,8 @@ function MRA_functions(id, seed, num_obs)
 end
 
 function obsgen_from_csv(filename, number, num_obs=1, seed=1)
+    # Set the seed
     seed = seed + number
-
 
     # Read CSV file
     df = DataFrame(CSV.File(filename; silencewarnings=true))
@@ -272,7 +272,8 @@ function obsgen_from_csv(filename, number, num_obs=1, seed=1)
     # Check if there is a non-valid expression
     not_valid_expressions = ["sin", "cos", "tan", "arcsin", "arccos", "arctan"]
     if any([!isnothing(findfirst(e, formula)) for e in not_valid_expressions])
-        return false, nothing, nothing, formula, nothing, nothing
+        println("there is a invalid operation in the formula, $(formula)")
+        return nothing, nothing, formula
     end
 
     z = zeros(num_obs)
@@ -289,60 +290,11 @@ function obsgen_from_csv(filename, number, num_obs=1, seed=1)
         z[i] = eval(Meta.parse(expr))
     end
 
-    true, obs, z, formula, lbs, ubs
+    obs      = [obs reshape(z, num_obs, 1)]
+    obs_info = join([@sprintf("x%d[%d,%d)", c, lbs[c], ubs[c]) for c in 1:num_var], "\t") * "\t" * formula 
+
+    obs, obs_info, formula
 end
-
-
-function AIF_functions(id, seed, num_obs)
-    ## From AI-Feynmann papers
-
-    valid, obs, z, z_info, lbs, ubs = obsgen_from_csv("FeynmanEquations.csv", id-200, num_obs, seed)
-    
-    if !valid
-        return nothing, nothing
-    end
-
-    num_var = size(obs, 2)
-
-    # if id == 201
-    #     z_info = "AIF-I.9.18"
-    #     num_var = 9   # [G m1 m2 x1 x2 y1 y2 z1 z2]
-    #     lbs =           [1, 1, 1, 1, 5, 1, 5, 1, 5]
-    #     ubs =           [2, 4, 8, 4, 8, 4, 8, 4, 8]
-
-    #     ## Generate independent varaibles
-    #     obs = initialize_obs(num_obs, num_var, seed)
-    #     uniform_lu_array!(obs, lbs, ubs)
-
-    #     ## Add a dependent varaible
-    #     z = ( obs[:,1] .* obs[:,2] .* obs[:,3] ) ./ 
-    #         ( (obs[:,4] - obs[:,5]).^2 + (obs[:,6] - obs[:,7]).^2 + (obs[:,8] - obs[:,9]).^2 )
-    # elseif id == 202
-    #     z_info = "AIF-I.15.3t"
-    #     num_var = 4   # [x  c  u  t]
-    #     lbs =           [1, 3, 1, 1]
-    #     ubs =           [5,10, 2, 5]
-
-    #     ## Generate independent varaibles
-    #     obs = initialize_obs(num_obs, num_var, seed)
-    #     uniform_lu_array!(obs, lbs, ubs)
-
-    #     ## Add a dependent varaible
-    #     x = obs[:,1]
-    #     c = obs[:,2]
-    #     u = obs[:,3]
-    #     t = obs[:,4]
-    #     z = ( t - u .* x ./ c.^2 ) ./ sqrt.(1 .- u.^2 ./ c.^2)
-    # else
-    #     return nothing, nothing
-    # end
-
-    obs         = [obs reshape(z, num_obs, 1)]
-    obs_info    = join([@sprintf("x%d[%d,%d)", c, lbs[c], ubs[c]) for c in 1:num_var], "\t") * "\t" * z_info 
-
-    obs, obs_info
-end
-
 
 function obs_generator(id, seed, num_obs, noise_level, filename="")
     # Initialization
@@ -354,7 +306,7 @@ function obs_generator(id, seed, num_obs, noise_level, filename="")
     elseif id <= 200
         obs, obs_info = MRA_functions(id, seed, num_obs)
     elseif id <= 300
-        obs, obs_info = AIF_functions(id, seed, num_obs)
+        obs, obs_info, formula = obsgen_from_csv("FeynmanEquations.csv", id-200, num_obs, seed)
     end
 
     if isnothing(obs)

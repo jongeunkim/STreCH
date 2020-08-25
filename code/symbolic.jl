@@ -96,7 +96,7 @@ end
 function solve_MINLP(nodes, obs, operators;
                     print_all_solutions=false,
                     formulation="New-NR",
-                    integer_constant=false,
+                    integer_constant=true,
                     ysol=nothing, 
                     ysol_dist_max=0, 
                     ysol_dist_min=0, 
