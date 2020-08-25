@@ -1,9 +1,9 @@
 using Logging
 
 include("obsgen.jl")
-include("symbolic.jl")
-include("heur.jl")
 include("opttree.jl")
+include("minlp.jl")
+include("heur.jl")
 
 ## Functions
 

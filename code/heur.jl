@@ -1,4 +1,4 @@
-include("symbolic.jl")
+include("minlp.jl")
 include("utils.jl")
 
 function solve_Heuristic(obs, 
