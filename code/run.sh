@@ -1,6 +1,6 @@
 # sleep 12000
 
-TIMELIMIT=21600
+TIMELIMIT=60
 # SLEEPTIME=10
 
 DIR=../log_$(date +'%Y%m%d_%H%M%S')_$(hostname)_t${TIMELIMIT}/
@@ -12,7 +12,7 @@ cp -R ../code/ ${DIR}/code/
 cnt=0
 for seed in 1
 do
-	# for id in 37
+	for id in 37
 
 	## 40 instances, AIF with two or three variables
 	# for id in 6 8 11 12 15 16 19 20 25 27 28 35 36 37 39 40 41 46 49 50 53 54 58 59 60 65 67 68 72 73 74 75 76 78 83 85 88 92 96 97
@@ -22,7 +22,7 @@ do
 	# for id in 74 75 76 78 83 85 88 92 96 97
 	
 	## 31 instances, AIF with at least four variables
-	for id in 4 5 7 9 10 14 17 18 21 24 32 33 34 42 45 47 52 56 61 63 64 66 71 77 79 82 84 91 93 99 100
+	# for id in 4 5 7 9 10 14 17 18 21 24 32 33 34 42 45 47 52 56 61 63 64 66 71 77 79 82 84 91 93 99 100
 	# for id in 4 5 7 9 10 14 17 18 21 24 32 33 34 42 45 47 
 	# for id in 52 56 61 63 64 66 71 77 79 82 84 91 93 99 100
 	
@@ -51,7 +51,7 @@ do
 				model="minlp"
 				for max_depth in 2 #3 4
 				do
-					for formulation in 1 2 3 4
+					for formulation in Cozad Cozad-CR New New-NR
 					do
 						ALGO=${model}_D${max_depth}_F-${formulation}
 						nohup julia main.jl $DIR$INS$ALGO $id $seed $num_obs $noise_level $TIMELIMIT $model $max_depth $formulation > $DIR$INS$ALGO.console 2>&1 &
