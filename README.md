@@ -56,6 +56,8 @@ The paper is working at Overleaf.
                         "-NR":      Add new redundancy elimination cut
             * I have not implemented symmetry breaking and implication constarint yet.
 
+        integer_constant: constnat is an integer or not, true/false
+
         (matters if ysol != nothing)
         ysol:                           solution of variable y in dict format (ysol[`nodeid`] = `operator`)
         ysol_dist_min, ysol_dist_max:   min/max distance from the current solution y
