@@ -18,7 +18,7 @@ The paper is working at Overleaf.
 
     Return the optimal value (MSE). If `noise_level` > 0, then `mse` > 0. 
 
-## symbolic.jl
+## minlp.jl
 - `feasible, optfeasible, time, optval, ysol, csol, vsol = solve_MINLP(nodes, obs, operators;
                                                                         print_all_solutions=false,
                                                                         formulation="New-NR",
