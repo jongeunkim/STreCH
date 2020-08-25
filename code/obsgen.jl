@@ -256,6 +256,10 @@ function obsgen_from_csv(filename, number, num_obs=1, seed=1)
     
     # Find the row index
     j = findfirst(df[!,:Number] .== number)
+    if isnothing(j)
+        println("there is no number == $(number)")
+        return nothing, nothing, formula
+    end
 
     # Generate obs matrix of size (num_obs X num_var) with Uniform(lbs, ubs)
     num_var = df[j, "# variables"]
@@ -301,13 +305,7 @@ function obs_generator(id, seed, num_obs, noise_level, filename="")
     obs = nothing
     obs_info = nothing
 
-    if id <= 100
-        obs, obs_info = simple_functions(id, seed, num_obs)
-    elseif id <= 200
-        obs, obs_info = MRA_functions(id, seed, num_obs)
-    elseif id <= 300
-        obs, obs_info, formula = obsgen_from_csv("FeynmanEquations.csv", id-200, num_obs, seed)
-    end
+    obs, obs_info, formula = obsgen_from_csv("Equations.csv", id, num_obs, seed)
 
     if isnothing(obs)
         return nothing, nothing, nothing
@@ -315,14 +313,6 @@ function obs_generator(id, seed, num_obs, noise_level, filename="")
 
     # Add Gaussian noise
     if noise_level > 0
-        if id in []
-            noise_level = max(1e-01, noise_level)
-        elseif id in [115]
-            noise_level = max(1e-02, noise_level)
-        elseif id in [5]
-            noise_level = max(1e-03, noise_level)
-        end
-
         Random.seed!(seed+1000)
         z = obs[:,end] .* (noise_level .* Random.randn((num_obs, 1)) .+ 1)
         optval = compute_mse(z, obs[:,end])
@@ -371,43 +361,29 @@ function get_ids(ids, condition_number)
             num_var     = size(obs,2) - 1
 
             if condition_number == 0
-                push!(valid_ids, id)
+                push!(ids_selected, id)
             elseif condition_number == 1 && !isexplog && num_var <= 3
-                push!(valid_ids, id)
+                push!(ids_selected, id)
             elseif condition_number == 2 && !isexplog && num_var >= 4
-                push!(valid_ids, id)
+                push!(ids_selected, id)
             elseif condition_number == 3 && isexplog
-                push!(valid_ids, id)
+                push!(ids_selected, id)
             else
                 nothing
             end
         end
     end
-    return valid_ids
+    return ids_selected
 end
 
-# ids = []
-# # ids = [ids; 1:6]
-# # ids = [ids; [106, 107, 108, 109, 115]]
-# ids = [ids; 201:300]
-# seeds = [1]
-# num_obss = [10]
-
-# for i in 91:100
-#     success, obs, z, formula = obsgen_from_csv("FeynmanEquations.csv", i, 1, 1)
-#     if !success
-#         println(i, ":: Failed, ", formula)
-#     end
-# end
-
-# Generate obs and write optimal solutions
+## Generate obs and write optimal solutions
 DIR = "../obs/"
 if !isdir(DIR)
     mkdir(DIR)
 end
 io = open(DIR * "optval.log", "w+")
 write(io, @sprintf("%8s\t%8s\t%8s\t%16s\t%16s\n", "id", "seed", "num_obs", "noise_level", "optval"))
-for id in 1:300, seed in [1], num_obs in [10]
+for id in 1:100, seed in [1], num_obs in [10]
     noise_level = 0
     obs, obs_info = obs_generator(id, seed, num_obs, noise_level, DIR * "i$(id)_n$(num_obs)_z$(noise_level).obs")
     for noise_level in [1e-04]
@@ -419,8 +395,8 @@ for id in 1:300, seed in [1], num_obs in [10]
 end
 close(io)
 
-# for condition_number in [0,1,2,3]
-#     ids = get_ids(201:300, condition_number)
-#     cnt = length(ids)
-#     println("condition_number=$(condition_number), cnt=$(cnt), ", join(ids, " "))
-# end
+for condition_number in [0,1,2,3]
+    ids = get_ids(1:100, condition_number)
+    cnt = length(ids)
+    println("condition_number=$(condition_number), cnt=$(cnt), ", join(ids, " "))
+end
