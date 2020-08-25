@@ -7,6 +7,10 @@ Then, you can execute run.sh to run a test.
 
 The paper is working at Overleaf.
 
+# Code Scheme
+
+![image of code scheme](https://www.dropbox.com/s/3s2lnkafykl81hs/symbolic_regression_code_scheme.png?dl=1)
+
 # Key functions
 
 ## obsgen.jl
