@@ -10,7 +10,10 @@ function solve_Heuristic(obs,
                         max_depth=4, 
                         min_improvement=0.01)
 
-                        # PARAMETERSET = [(fixlevel,smin,smax,time) for time in [300, 600, 1200, 2400, 4800, 9600] for (smin, smax) in [(0,3), (4,5), (6,7)] for fixlevel in [1,2]]
+    
+
+
+    # PARAMETERSET = [(fixlevel,smin,smax,time) for time in [300, 600, 1200, 2400, 4800, 9600] for (smin, smax) in [(0,3), (4,5), (6,7)] for fixlevel in [1,2]]
     PARAMETERSET = [(fixlevel,smin,smax,nodelimit) for nodelimit in [10^i for i in 4:100] for (smin, smax) in [(0,3), (4,5), (6,7)] for fixlevel in [1,2]] 
 
     ## Initialization

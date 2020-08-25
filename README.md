@@ -6,3 +6,10 @@ Run install_pkgs.jl to install the required julia packages.
 Then, you can execute run.sh to run a test. 
 
 The paper is working at Overleaf.
+
+
+* Key functions 
+
+** Key
+
+obs, obs_info, noise_level = obs_generator(id, seed, num_obs, noise_level, filename="")
