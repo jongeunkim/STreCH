@@ -80,22 +80,20 @@ The paper is working at Overleaf.
 
 
 ## heur.jl
-`arr_obj, arr_time, arr_active = solve_Heuristic(obs, operators; 
+`arr_obj, arr_time, arr_active = solve_Heuristic(nodes_ground, obs, operators; 
                                                     time_limit=60, 
                                                     obj_termination=1e-06,
                                                     init_solve=1, 
                                                     subsampling=1,
-                                                    max_depth=4, 
                                                     min_improvement=0.01)`
     
 Solve a local branching heuristic.
 
-`obs, operators` are mandatory inputs. Optional inputs are the followings.
+`nodes_ground, obs, operators` are mandatory inputs. Optional inputs are the followings. `nodes_ground` represents the ground tree, in other words, the algorithm only search an expression tree within `nodes_ground`. 
 - `time_limit`: time limit
 - `obj_termination`: heuristic ends when it finds a solution whose objective value is lower or equal to `obj_termination`
 - `init_solve`: heuristic solves depth-`init_solve` problem as an initial problem 
 - `subsampling`: heuristic solves with `100 * subsampling` % of high error observations at every iteration
-- `max_depth`: a solution expression tree is limited by depth `max_depth`
 - `min_improvement`: at every iteration, the solver stops when it finds a solution whose objective value is `100 * min_improvement` % lower than the current one
 
 It returns three items, arrays of objective values, cumulative times, and # of active nodes.
