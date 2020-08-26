@@ -214,7 +214,11 @@ function expand_nodes(nodes)
     OrderedSet(sort(collect(nodes)))
 end
 
-function update_nodes(ysol, max_depth, stepsize)
+function get_nodes_by_depth(max_depth)
+    OrderedSet(1:(2^(max_depth+1)-1))
+end
+
+function update_nodes(ysol, nodes_ground, stepsize)
     """
     Return nodes that is large enough to serach k-neighbor of ysol given max_depth and stepsize (distance)
     """
@@ -227,7 +231,7 @@ function update_nodes(ysol, max_depth, stepsize)
 
     nodes = fill_single_child(nodes)
 
-    intersect!(nodes, Set(1:(2^(max_depth+1)-1)))
+    intersect!(nodes, nodes_ground)
  
     OrderedSet(sort(collect(nodes)))
 end

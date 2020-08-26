@@ -16,6 +16,7 @@ function write_result(FILENAME, obj, active, time, niters, errmsg)
     close(io)
 end
 
+
 ## Main function
 function main(args)
     ## Read argument
@@ -68,12 +69,15 @@ function main(args)
         ## If model is `heur` then param1 = max_depth and param2 = init_solve
         max_depth = parse(Int, model_params[1])
         init_solve = parse(Int, model_params[2])
+
+        ## Create nodes by max_depth
+        nodes = OrderedSet(1:(2^(max_depth+1)-1))
         
         ## Solve a heuristic
         global_logger(logger)
         arr_obj, arr_time, arr_active = 
-            solve_Heuristic(obs, operators, time_limit=time_limit, max_depth=max_depth,
-                            init_solve=init_solve, obj_termination=optval)
+            solve_Heuristic(nodes, obs, operators;
+                            time_limit=time_limit, init_solve=init_solve, obj_termination=optval)
         b = argmin(arr_obj)
         obj = arr_obj[b]
         time = arr_time[end]

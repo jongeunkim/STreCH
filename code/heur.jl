@@ -1,17 +1,12 @@
 include("minlp.jl")
 include("utils.jl")
 
-function solve_Heuristic(obs, 
-                        operators; 
+function solve_Heuristic(nodes_ground, obs, operators; 
                         time_limit=60, 
                         obj_termination=1e-06,
                         init_solve=1, 
                         subsampling=1,
-                        max_depth=4, 
                         min_improvement=0.01)
-
-    
-
 
     # PARAMETERSET = [(fixlevel,smin,smax,time) for time in [300, 600, 1200, 2400, 4800, 9600] for (smin, smax) in [(0,3), (4,5), (6,7)] for fixlevel in [1,2]]
     PARAMETERSET = [(fixlevel,smin,smax,nodelimit) for nodelimit in [10^i for i in 4:100] for (smin, smax) in [(0,3), (4,5), (6,7)] for fixlevel in [1,2]] 
@@ -58,7 +53,7 @@ function solve_Heuristic(obs,
         TIME_LIMIT = max(10, remaining_time)
         @info "Heuristic Iteration $(iter)" ysol ysol_fixlevel ysol_dist_min ysol_dist_max NODE_LIMIT
 
-        nodes       = update_nodes(ysol, max_depth, ysol_dist_max)
+        nodes       = update_nodes(ysol, nodes_ground, ysol_dist_max)
 
         # Subsampling
         if length(nodes) > 7

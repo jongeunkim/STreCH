@@ -1,12 +1,12 @@
-# sleep 12000
-
+## Set the time limit
 TIMELIMIT=60
-# SLEEPTIME=10
 
+## Create a log folder
 DIR=../log_$(date +'%Y%m%d_%H%M%S')_$(hostname)_t${TIMELIMIT}/
 mkdir -p $DIR
 echo "Directory $DIR is created."
-# cp run.sh ${DIR}run.sh
+
+## Copy the current codes
 cp -R ../code/ ${DIR}/code/
 
 cnt=0
