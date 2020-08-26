@@ -23,34 +23,34 @@ INS=i${id}_s${seed}_n${num_obs}_z${noise_level}/
 mkdir -p $DIR$INS
 
 ## Run heuristics
-model="heur"
+method="heur"
 for max_depth in 3 #4 5
 do
 	for init_solve in 2 # 1 2 3 4
 	do
-		ALGO=${model}_D${max_depth}_i${init_solve}
-		nohup julia main.jl $DIR$INS$ALGO $id $seed $num_obs $noise_level $TIMELIMIT $model $max_depth $init_solve > $DIR$INS$ALGO.console 2>&1 &
+		ALGO=${method}_D${max_depth}_i${init_solve}
+		nohup julia main.jl $DIR$INS$ALGO $id $seed $num_obs $noise_level $TIMELIMIT $method $max_depth $init_solve > $DIR$INS$ALGO.console 2>&1 &
 		cnt=$(( cnt + 1 ))
 		continue
 	done
 done
 
 ## Run minlps
-model="minlp"
+method="minlp"
 for max_depth in 2 #3 4
 do
 	for formulation in Cozad Cozad-CR New New-NR
 	do
-		ALGO=${model}_D${max_depth}_F-${formulation}
-		nohup julia main.jl $DIR$INS$ALGO $id $seed $num_obs $noise_level $TIMELIMIT $model $max_depth $formulation > $DIR$INS$ALGO.console 2>&1 &
+		ALGO=${method}_D${max_depth}_F-${formulation}
+		nohup julia main.jl $DIR$INS$ALGO $id $seed $num_obs $noise_level $TIMELIMIT $method $max_depth $formulation > $DIR$INS$ALGO.console 2>&1 &
 		cnt=$(( cnt + 1 ))
 	done
 done
 
 ## Run optcheck
-model="optcheck"
-ALGO=${model}
-nohup julia main.jl $DIR$INS$ALGO $id $seed $num_obs $noise_level $TIMELIMIT $model > $DIR$INS$ALGO.console 2>&1 &
+method="optcheck"
+ALGO=${method}
+nohup julia main.jl $DIR$INS$ALGO $id $seed $num_obs $noise_level $TIMELIMIT $method > $DIR$INS$ALGO.console 2>&1 &
 cnt=$(( cnt + 1 ))
 
 ## Display how many instances are running

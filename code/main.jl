@@ -27,8 +27,8 @@ function main(args)
     num_obs         = parse(Int, args[i+=1])
     noise_level     = parse(Float64, args[i+=1])
     time_limit      = parse(Int, args[i+=1])
-    model           = args[i+=1]
-    model_params    = [args[i+j] for j in 1:(length(args)-i)]
+    method           = args[i+=1]
+    method_params    = [args[i+j] for j in 1:(length(args)-i)]
 
     ## Run a dummy solve to compile
     io = open("dummy.log", "w+")
@@ -44,16 +44,16 @@ function main(args)
     ## Assign operators and operands
     # Binary:   + - * D
     # Unary:    R (sqrt), E (exp), L (log) 
-    # Constant: C (integer), P (pi)
+    # Constant: C (general), P (pi)
     operators = OrderedSet("+-*DRCP")
 
     ## Solve
     io = open(FILENAME * ".log", "w+")
     logger = SimpleLogger(io, Logging.Info)
-    if model == "minlp"
-        ## If model is `minlp` then param1 = max_depth and param2 = formulation
-        max_depth = parse(Int, model_params[1])
-        formulation = model_params[2]
+    if method == "minlp"
+        ## If method is `minlp` then param1 = max_depth and param2 = formulation
+        max_depth = parse(Int, method_params[1])
+        formulation = method_params[2]
 
         ## Create nodes by max_depth
         nodes = OrderedSet(1:(2^(max_depth+1)-1))
@@ -65,10 +65,10 @@ function main(args)
         niters = 0
         errmsg = optfeasible ? "" : "optinfeasible"
         close(io)
-    elseif model == "heur"
-        ## If model is `heur` then param1 = max_depth and param2 = init_solve
-        max_depth = parse(Int, model_params[1])
-        init_solve = parse(Int, model_params[2])
+    elseif method == "heur"
+        ## If method is `heur` then param1 = max_depth and param2 = init_solve
+        max_depth = parse(Int, method_params[1])
+        init_solve = parse(Int, method_params[2])
 
         ## Create nodes by max_depth
         nodes = OrderedSet(1:(2^(max_depth+1)-1))
@@ -85,7 +85,7 @@ function main(args)
         niters = length(arr_obj)
         errmsg = ""
         close(io)
-    elseif model == "optcheck"
+    elseif method == "optcheck"
         ## Check the optimal value by reading an optimal tree. Currently, only one optimal tree is available (id=37)
         ysol, csol = opttree(id)
         operators = union(Set("+-*D"), intersect(Set("RELCP"), Set(values(ysol))))

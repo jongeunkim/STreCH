@@ -377,26 +377,26 @@ function get_ids(ids, condition_number)
 end
 
 ## Generate obs and write optimal solutions
-DIR = "../obs/"
-if !isdir(DIR)
-    mkdir(DIR)
-end
-io = open(DIR * "optval.log", "w+")
-write(io, @sprintf("%8s\t%8s\t%8s\t%16s\t%16s\n", "id", "seed", "num_obs", "noise_level", "optval"))
-for id in 1:100, seed in [1], num_obs in [10]
-    noise_level = 0
-    obs, obs_info = obs_generator(id, seed, num_obs, noise_level, DIR * "i$(id)_n$(num_obs)_z$(noise_level).obs")
-    for noise_level in [1e-04]
-        optval, noise_level = obs_optval(id, seed, num_obs, noise_level)
-        if !isnothing(optval)
-            write(io, @sprintf("%8d\t%8d\t%8d\t%16.1e\t%16.6e\n", id, seed, num_obs, noise_level, optval))
-        end
-    end
-end
-close(io)
+# DIR = "../obs/"
+# if !isdir(DIR)
+#     mkdir(DIR)
+# end
+# io = open(DIR * "optval.log", "w+")
+# write(io, @sprintf("%8s\t%8s\t%8s\t%16s\t%16s\n", "id", "seed", "num_obs", "noise_level", "optval"))
+# for id in 1:100, seed in [1], num_obs in [10]
+#     noise_level = 0
+#     obs, obs_info = obs_generator(id, seed, num_obs, noise_level, DIR * "i$(id)_n$(num_obs)_z$(noise_level).obs")
+#     for noise_level in [1e-04]
+#         optval, noise_level = obs_optval(id, seed, num_obs, noise_level)
+#         if !isnothing(optval)
+#             write(io, @sprintf("%8d\t%8d\t%8d\t%16.1e\t%16.6e\n", id, seed, num_obs, noise_level, optval))
+#         end
+#     end
+# end
+# close(io)
 
-for condition_number in [0,1,2,3]
-    ids = get_ids(1:100, condition_number)
-    cnt = length(ids)
-    println("condition_number=$(condition_number), cnt=$(cnt), ", join(ids, " "))
-end
+# for condition_number in [0,1,2,3]
+#     ids = get_ids(1:100, condition_number)
+#     cnt = length(ids)
+#     println("condition_number=$(condition_number), cnt=$(cnt), ", join(ids, " "))
+# end
