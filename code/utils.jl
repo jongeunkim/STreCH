@@ -4,6 +4,7 @@ Collection of utility functions
 """
 
 using DataStructures
+using Printf
 
 function compute_mse(y_pred, y_true)
     err = y_pred - y_true
@@ -201,6 +202,54 @@ function fill_single_child(nodes)
     end
 
     OrderedSet(sort(collect(nodes)))
+end
+
+function get_nodes_complete(nodes)
+    """
+    Return a set of nodes that its rooted subtree is a complete binary tree.
+    Assume that `nodes' is a proper binary tree.
+    """
+    # nodes_arr = sort(collect(nodes), rev=true)
+    height = Dict()
+    nodes_complete = Set()
+    for n in sort(collect(nodes), rev=true)
+        if 2*n in nodes
+            if height[2*n] >= 0 && height[2*n] == height[2*n+1]
+                height[n] = height[2*n] + 1  
+                push!(nodes_complete, n) 
+            else
+                height[n] = -1  
+            end
+        else
+            height[n] = 0
+            push!(nodes_complete, n) 
+        end
+    end
+
+    # println("height")
+    # for n in sort(collect(nodes))
+    #     println("height[$(n)] = $(height[n])")
+    # end
+
+    # println("nodes_complete")
+    # println(nodes_complete)
+
+    OrderedSet(sort(collect(nodes_complete)))
+end
+
+function get_nodes_grandparents(nodes)
+    """
+    Return a set of nodes that has any of 4n, 4n+1, 4n+2, 4n+3
+    """
+    # nodes_arr = sort(collect(nodes), rev=true)
+    nodes_grandparents = Set()
+    for n in nodes
+        if !isempty(intersect(Set([4*n 4*n+1 4*n+2 4*n+3]), nodes))
+            push!(nodes_grandparents, n) 
+        end
+    end
+
+    OrderedSet(sort(collect(nodes_grandparents)))
 end
 
 function expand_nodes(nodes)

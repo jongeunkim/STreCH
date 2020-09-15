@@ -96,7 +96,7 @@ end
 function solve_MINLP(nodes, obs, operators;
                     print_all_solutions=false,
                     formulation="New-NR",
-                    integer_constant=true,
+                    integer_constant=false,
                     ysol=nothing, 
                     ysol_dist_max=0, 
                     ysol_dist_min=0, 
@@ -342,6 +342,13 @@ function solve_MINLP(nodes, obs, operators;
                 @debug "Constrs to remove redundancy (New version) $(formulation)"
                 @constraint(model, redun_cst_rhs[n in nleaves], y[2*n+1,'C'] <= y[n,'+'] + y[n,'*'])
             end
+        end
+
+        if occursin("-NR", formulation)
+            @debug "Constrs to remove redundancy (New version 2) $(formulation)"
+            nodes_constr = intersect(get_nodes_complete(nodes), get_nodes_grandparents(nodes))
+            @constraint(model, redun_pm[n in nodes_constr], y[n,'+'] + y[2*n+1,'-'] <= 1)
+            @constraint(model, redun_pd[n in nodes_constr], y[n,'*'] + y[2*n+1,'D'] <= 1)
         end
     end
 
@@ -598,6 +605,6 @@ function solve_MINLP(nodes, obs, operators;
 
     relerr_recompute = abs(JuMP.objective_value(model)/arr_obj[b] - 1)
 
-    return true, relerr_recompute < 1e-03, time, arr_obj[b], ysol, csol, vsol
+    return true, relerr_recompute < 1e-03, time, arr_obj[b], ysol, csol, vsol, JuMP.node_count(model)
     # return false, nothing, nothing, nothing, nothing, nothing, nothing
 end

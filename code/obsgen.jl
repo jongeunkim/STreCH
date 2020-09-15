@@ -300,7 +300,7 @@ function obsgen_from_csv(filename, number, num_obs=1, seed=1)
     obs, obs_info, formula
 end
 
-function obs_generator(id, seed, num_obs, noise_level, filename="")
+function obs_generator(id, seed, num_obs, noise_level, filename="", header=true)
     # Initialization
     obs = nothing
     obs_info = nothing
@@ -329,7 +329,9 @@ function obs_generator(id, seed, num_obs, noise_level, filename="")
 
     if filename != ""
         open(filename, "w") do io
-            DelimitedFiles.write(io, obs_info * "\n")
+            if header
+                DelimitedFiles.write(io, obs_info * "\n")
+            end
             DelimitedFiles.writedlm(io, obs)
         end
     end
@@ -383,9 +385,10 @@ end
 # end
 # io = open(DIR * "optval.log", "w+")
 # write(io, @sprintf("%8s\t%8s\t%8s\t%16s\t%16s\n", "id", "seed", "num_obs", "noise_level", "optval"))
-# for id in 1:100, seed in [1], num_obs in [10]
-#     noise_level = 0
-#     obs, obs_info = obs_generator(id, seed, num_obs, noise_level, DIR * "i$(id)_n$(num_obs)_z$(noise_level).obs")
+# for id in 1:100, seed in [1], num_obs in [10], noise_level in [0]
+#     INS = "i$(id)_n$(num_obs)_z$(noise_level)"
+
+#     obs, obs_info = obs_generator(id, seed, num_obs, noise_level, "$(DIR)$(INS).obs", false)
 #     for noise_level in [1e-04]
 #         optval, noise_level = obs_optval(id, seed, num_obs, noise_level)
 #         if !isnothing(optval)

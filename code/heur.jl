@@ -28,7 +28,7 @@ function solve_Heuristic(nodes_ground, obs, operators;
     nodes = Set(1:(2^(init_solve+1)-1))
     # (TIME_LIMIT, NODE_LIMIT) = (min(0.1 * remaining_time, 300), -1)
     (TIME_LIMIT, NODE_LIMIT) = (remaining_time, 10 * PARAMETERSET[1][4])
-    feasible, optfeasible, time, obj, ysol, csol, vsol = solve_MINLP(nodes, obs, operators, scip_time=TIME_LIMIT, scip_nodes=NODE_LIMIT)
+    feasible, optfeasible, time, obj, ysol, csol, vsol, bnbnodes = solve_MINLP(nodes, obs, operators, scip_time=TIME_LIMIT, scip_nodes=NODE_LIMIT)
 
     
     remaining_time -= time
@@ -68,7 +68,7 @@ function solve_Heuristic(nodes_ground, obs, operators;
 
 
         # Solve
-        feasible, optfeasible, time, obj, ysol, csol, vsol  = 
+        feasible, optfeasible, time, obj, ysol, csol, vsol, bnbnodes  = 
             solve_MINLP(nodes, subobs, operators, 
                         ysol=ysol, ysol_dist_min=ysol_dist_min, ysol_dist_max=ysol_dist_max, ysol_fixlevel=ysol_fixlevel,
                         scip_absgap=(1-min_improvement)*minimum(arr_obj),

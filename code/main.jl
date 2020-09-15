@@ -6,13 +6,13 @@ include("minlp.jl")
 include("heur.jl")
 
 ## Write a single line of result to csv file
-function write_result(FILENAME, obj, active, time, niters, errmsg)
+function write_result(FILENAME, obj, active, time, bnbnodes, niters, errmsg)
     (DIR, FILE) = splitdir(FILENAME)
     (DIR, INS) = splitdir(DIR)
 
     ## Write optimal values
     io = open(DIR * "/result.csv", "a+")
-    write(io, @sprintf("%40s,\t%20s,\t%20s,\t%12.6e,\t%12d,\t%12.2f,\t%4d,\t%24s\n", DIR, INS, FILE, obj, active, time, niters, errmsg))
+    write(io, @sprintf("%40s,\t%20s,\t%20s,\t%12.6e,\t%12d,\t%12.2f,\t%8d,\t%4d,\t%24s\n", DIR, INS, FILE, obj, active, time, bnbnodes, niters, errmsg))
     close(io)
 end
 
@@ -45,11 +45,11 @@ function main(args)
     # Binary:   + - * D
     # Unary:    R (sqrt), E (exp), L (log) 
     # Constant: C (general), P (pi)
-    operators = OrderedSet("+-*DRCP")
+    operators = OrderedSet("+-*DRC")
 
     ## Solve
     io = open(FILENAME * ".log", "w+")
-    logger = SimpleLogger(io, Logging.Info)
+    logger = SimpleLogger(io, Logging.Debug)
     if method == "minlp"
         ## If method is `minlp` then param1 = max_depth and param2 = formulation
         max_depth = parse(Int, method_params[1])
@@ -60,7 +60,7 @@ function main(args)
 
         ## Solve a minlp
         global_logger(logger)
-        feasible, optfeasible, time, obj, ysol, csol, vsol = solve_MINLP(nodes, obs, operators, scip_time=time_limit, formulation=formulation, print_all_solutions=true)
+        feasible, optfeasible, time, obj, ysol, csol, vsol, bnbnodes = solve_MINLP(nodes, obs, operators, scip_time=time_limit, formulation=formulation, print_all_solutions=true)
         active = feasible ? length(ysol) : 0
         niters = 0
         errmsg = optfeasible ? "" : "optinfeasible"
@@ -82,6 +82,7 @@ function main(args)
         obj = arr_obj[b]
         time = arr_time[end]
         active = arr_active[b]
+        bnbnodes = 0
         niters = length(arr_obj)
         errmsg = ""
         close(io)
@@ -97,6 +98,7 @@ function main(args)
             feasible, optfeasible, time, obj, ysol, csol, vsol = solve_MINLP(nodes, obs, operators, scip_time=time_limit, 
                 ysol=ysol, ysol_dist=0, ysol_dist_min=0, ysol_fix_level=0, csol=csol, print_all_solutions=true)
             active = feasible ? length(ysol) : 0
+            bnbnodes = 0
             niters = 0
             errmsg = optfeasible ? "" : "optinfeasible"
             close(io)
@@ -105,7 +107,9 @@ function main(args)
         end
     end
 
-    write_result(FILENAME, obj, active, time, niters, errmsg)
+    write_result(FILENAME, obj, active, time, bnbnodes, niters, errmsg)
 end
+
+
 
 main(ARGS)
