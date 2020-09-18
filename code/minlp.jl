@@ -2,7 +2,6 @@ using DataStructures
 using InteractiveUtils
 using JuMP
 using Logging
-# using MathOptInterface
 using Printf
 using SCIP
 
