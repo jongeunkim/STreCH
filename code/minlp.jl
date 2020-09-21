@@ -333,9 +333,9 @@ function solve_MINLP(nodes, obs, operators;
             if occursin("-CR", formulation)
                 @debug "Constrs to remove redundancy (Cozad version) $(formulation)"
                 @constraints(model, begin
-                    redun_cst_unary[n in nleaves], y[2*n+1,'C'] + sum(y[n,o] for (n,o) in y_indexes if o in operU) <= 1
-                    redun_cst_minus[n in nleaves], y[2*n+1,'C'] + sum(y[n,o] for (n,o) in y_indexes if o == '-') <= 1
-                    redun_cst_div[n in nleaves], y[2*n+1,'C'] + sum(y[n,o] for (n,o) in y_indexes if o == 'D') <= 1
+                    redun_cst_unary[n in nleaves], y[2*n+1,'C'] + sum(y[nn,o] for (nn,o) in y_indexes if nn == n && o in operU) <= 1
+                    redun_cst_minus[n in nleaves], y[2*n+1,'C'] + sum(y[nn,o] for (nn,o) in y_indexes if nn == n && o == '-') <= 1
+                    redun_cst_div[n in nleaves], y[2*n+1,'C'] + sum(y[nn,o] for (nn,o) in y_indexes if nn == n && o == 'D') <= 1
                 end)
             elseif occursin("-NR", formulation)
                 @debug "Constrs to remove redundancy (New version) $(formulation)"

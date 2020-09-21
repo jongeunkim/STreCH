@@ -95,8 +95,8 @@ function main(args)
             nodes = Set(keys(ysol))
 
             global_logger(logger)
-            feasible, optfeasible, time, obj, ysol, csol, vsol = solve_MINLP(nodes, obs, operators, scip_time=time_limit, 
-                ysol=ysol, ysol_dist=0, ysol_dist_min=0, ysol_fix_level=0, csol=csol, print_all_solutions=true)
+            feasible, optfeasible, time, obj, ysol, csol, vsol, bnbnodes = solve_MINLP(nodes, obs, operators, scip_time=time_limit, formulation="Cozad-CR",
+                ysol=ysol, ysol_fixlevel=0, csol=csol, print_all_solutions=true)
             active = feasible ? length(ysol) : 0
             bnbnodes = 0
             niters = 0
