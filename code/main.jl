@@ -60,7 +60,8 @@ function main(args)
 
         ## Solve a minlp
         global_logger(logger)
-        feasible, optfeasible, time, obj, ysol, csol, vsol, bnbnodes = solve_MINLP(nodes, obs, operators, scip_time=time_limit, formulation=formulation, print_all_solutions=true)
+        feasible, optfeasible, time, obj, ysol, csol, vsol, bnbnodes = solve_MINLP(
+            nodes, obs, operators, optimizer_name="SCIP", scip_time=time_limit, formulation=formulation, print_all_solutions=true)
         active = feasible ? length(ysol) : 0
         niters = 0
         errmsg = optfeasible ? "" : "optinfeasible"

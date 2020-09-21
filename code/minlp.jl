@@ -1,4 +1,5 @@
 using DataStructures
+# using Gurobi
 using InteractiveUtils
 using JuMP
 using Logging
@@ -93,6 +94,7 @@ function print_num_oper(num_oper, operA)
 end
 
 function solve_MINLP(nodes, obs, operators;
+                    optimizer_name="SCIP",
                     print_all_solutions=false,
                     formulation="New-NR",
                     integer_constant=false,
@@ -175,15 +177,32 @@ function solve_MINLP(nodes, obs, operators;
 
     ## Create a model and set the solver's parameters (timelimit, gap, ...)
     @debug "Create a model and set the solver's parameters (timelimit, gap, ...)"
-    optimizer = SCIP.Optimizer(
-                    display_verblevel=scip_verblevel,           # default = 4, 0:5
-                    limits_absgap=scip_absgap,                  # default = 0
-                    limits_time=scip_time,  
-                    limits_nodes=scip_nodes,   
-                    presolving_maxrounds=scip_presolve,         # default = -1                
-                    numerics_feastol=1e-07,                     # default = 1e-06
-                    numerics_epsilon=1e-09)                     # default = 1e-09
-    model = Model(() -> optimizer) 
+    
+    if optimizer_name == "SCIP"
+        optimizer = SCIP.Optimizer(
+                        display_verblevel=scip_verblevel           # default = 4, 0:5
+                        , limits_absgap=scip_absgap                  # default = 0
+                        , limits_time=scip_time  
+                        , limits_nodes=scip_nodes   
+                        , presolving_maxrounds=scip_presolve         # default = -1                
+                        , numerics_feastol=1e-07                     # default = 1e-06
+                        , numerics_epsilon=1e-09                     # default = 1e-09
+                        , parallel_maxnthreads=1
+                        )
+        model = Model(() -> optimizer) 
+    elseif optimizer_name == "Gurobi"
+        model = JuMP.Model(Gurobi.Optimizer)
+        JuMP.set_optimizer_attribute(model, "NonConvex", 2)
+        JuMP.set_optimizer_attributes(model 
+            , "MIPGapAbs" => scip_absgap
+            , "TimeLimit" => scip_time
+            , "NodeLimit" => scip_nodes <= 0 ? 1e+100 : scip_nodes
+            , "Presolve" => -1
+            , "FeasibilityTol" => 1e-09
+            # , "OptimalityTol" => 1e-06
+            , "Threads" => 1
+            )
+    end
 
     ## Decision variables
     @debug "Decision variables"
@@ -527,6 +546,7 @@ function solve_MINLP(nodes, obs, operators;
     ## Find the index of the best feasible solution
     ## We have this code because the returned solution is sometimes infeasible
     num_results = JuMP.result_count(model)
+    @info   "num_results = $num_results"
     if num_results == 0 
         # There is no solution. We stop here.
         @info   "Print result (no solution)\n" *
@@ -542,13 +562,16 @@ function solve_MINLP(nodes, obs, operators;
     arr_obj     = 1e+09 * ones(num_results)
     arr_active  = zeros(num_results)
     for i in num_results:-1:1
-        @assert JuMP.has_values(model; result = i)
- 
-        ysol = get_ysol(y, y_indexes, nodes, operA; num_result=i)
-        csol = get_csol(c, nodes; num_result=i)
-        vsol, err = get_vsol(ysol, csol, obs)
-        arr_obj[i] = err ? 1e+09 : compute_mse(vsol[:,1], obs[:,end])
-        arr_active[i] = err ? 0 : length(ysol)
+        # @assert JuMP.has_values(model; result = i)
+        if JuMP.has_values(model; result = i)
+            ysol = get_ysol(y, y_indexes, nodes, operA; num_result=i)
+            csol = get_csol(c, nodes; num_result=i)
+            vsol, err = get_vsol(ysol, csol, obs)
+            arr_obj[i] = err ? 1e+09 : compute_mse(vsol[:,1], obs[:,end])
+            arr_active[i] = err ? 0 : length(ysol)
+        else
+            nothing
+        end
     end
 
     ## Now we know the best solution. Print and return it.
@@ -590,14 +613,17 @@ function solve_MINLP(nodes, obs, operators;
     if print_all_solutions
         for i in 1:num_results
             if arr_active[i] > 0
-                @assert JuMP.has_values(model; result = i)
-        
-                ysol1 = get_ysol(y, y_indexes, nodes, operA; num_result=i)
-                csol1 = get_csol(c, nodes; num_result=i)
-                @info   "Print solution $i\n" *
-                        @sprintf("obj (recomputed)      = %12.6f\n",    arr_obj[i]) *
-                        @sprintf("active_count          = %12d\n",      arr_active[i]) *
-                        print_tree(get_treesol(ysol1, csol1))   
+                # @assert JuMP.has_values(model; result = i)
+                if JuMP.has_values(model; result = i)
+                    ysol1 = get_ysol(y, y_indexes, nodes, operA; num_result=i)
+                    csol1 = get_csol(c, nodes; num_result=i)
+                    @info   "Print solution $i\n" *
+                            @sprintf("obj (recomputed)      = %12.6f\n",    arr_obj[i]) *
+                            @sprintf("active_count          = %12d\n",      arr_active[i]) *
+                            print_tree(get_treesol(ysol1, csol1))   
+                else
+                    nothing 
+                end
             end
         end
     end
