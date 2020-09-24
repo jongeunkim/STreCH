@@ -381,12 +381,13 @@ end
 
 function main(args)
     i = 0
+    dir             = args[i+=1]
     id              = parse(Int, args[i+=1])
     seed            = parse(Int, args[i+=1])
     num_obs         = parse(Int, args[i+=1])
     noise_level     = parse(Float64, args[i+=1])
     
-    obs_generator(id, seed, num_obs, noise_level, @sprintf("i%03d_s%02d_n%.0e_z%.0e", id, seed, num_obs, noise_level), false)
+    obs_generator(id, seed, num_obs, noise_level,"$(dir)data.obs", false)
 end
 
 main(ARGS)
