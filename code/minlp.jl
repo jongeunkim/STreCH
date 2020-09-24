@@ -370,6 +370,13 @@ function solve_MINLP(nodes, obs, operators;
         end
     end
 
+    ## Constrs to break symmetry
+    if occursin("-Sym", formulation)
+        @debug "Constrs to break symmetry $(formulation)"
+        nodes_constr = intersect(get_nodes_complete(nodes), nleaves)
+        @constraint(model, sym[n in nodes_constr], v[1,2*n] - v[1,2*n+1] >= (v_lb - v_ub) * (1 - y[n,'+'] - y[n,'*']))
+    end
+
     ## Constrs for defining domain bounds
     @debug "Constrs for defining domain bounds"
     if 'C' in operA && cst_abslb > 0
