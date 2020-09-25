@@ -1,5 +1,5 @@
 TIMELIMIT=10800			# time limit for a method (MINLP or Heuristic)
-NUM_ID_PER_BATCH=20		# the number of instances in a batch. If you run multiple methods, then it runs "NUM_ID_PER_BATCH x NUM_METHODS" per batch. 
+NUM_ID_PER_BATCH=12		# the number of instances in a batch. If you run multiple methods, then it runs "NUM_ID_PER_BATCH x NUM_METHODS" per batch. 
 
 ## Initializeation
 cnt=0					# the number of runs, +1 when it runs a instance (=data+method)
@@ -20,7 +20,8 @@ do
 	# for id in 9
 
 	## easy40 + hard31
-	for id in 6 8 11 12 15 16 19 20 25 27 28 35 36 37 39 40 41 46 49 50 53 54 58 59 60 65 67 68 72 73 74 75 76 78 83 85 88 92 96 97 4 5 7 9 10 14 17 18 21 24 32 33 34 42 45 47 52 56 61 63 64 66 71 77 79 82 84 91 93 99 100
+	# for id in 6 8 11 12 15 16 19 20 25 27  28 35 36 37 39 40 41 46 49 50  53 54 58 59 60 65 67 68 72 73  74 75 76 78 83 85 
+	for id in 88 92 96 97 4 5 7 9 10 14  17 18 21 24 32 33 34 42 45 47  52 56 61 63 64 66 71 77 79 82  84 91 93 99 100 
 
 	## 40 instances, AIF with two or three variables
 	# for id in 6 8 11 12 15 16 19 20 25 27 28 35 36 37 39 40 41 46 49 50 53 54 58 59 60 65 67 68 72 73 74 75 76 78 83 85 88 92 96 97
@@ -38,7 +39,7 @@ do
 	do
 		for num_obs in 10
 		do
-			for noise_level in 0.0001
+			for noise_level in 0.0001 #0 #0.0001
 			do
 				INS=i${id}_s${seed}_n${num_obs}_z${noise_level}/
 				mkdir -p $DIR$INS
@@ -56,9 +57,9 @@ do
 				# done
 
 				method="minlp"
-				for max_depth in 2 #3 4
+				for max_depth in 2 #3 # 4
 				do
-					for formulation in Cozad Cozad-CR Cozad-Sym Cozad-CR-Sym New New-NR New-Sym New-NR-Sym
+					for formulation in New New-NR New-Sym New-NR-Sym Cozad Cozad-CR Cozad-Sym Cozad-CR-Sym
 					do
 						ALGO=${method}_D${max_depth}_F-${formulation}
 						nohupout="$DIR$INS$ALGO.console"

@@ -244,7 +244,7 @@ function MRA_functions(id, seed, num_obs)
     obs, obs_info
 end
 
-function obsgen_from_csv(filename, number, num_obs=1, seed=1)
+function obsgen_from_csv(filename, number, num_obs=1, seed=1; lb_factor=1, ub_factor=1)
     # Set the seed
     seed = seed + number
 
@@ -264,8 +264,10 @@ function obsgen_from_csv(filename, number, num_obs=1, seed=1)
     # Generate obs matrix of size (num_obs X num_var) with Uniform(lbs, ubs)
     num_var = df[j, "# variables"]
     obs = initialize_obs(num_obs, num_var, seed)
-    lbs = [df[j, "v$(v)_low"] for v in 1:num_var]
-    ubs = [df[j, "v$(v)_high"] for v in 1:num_var]
+    lbs = lb_factor * [df[j, "v$(v)_low"] for v in 1:num_var]
+    ubs = ub_factor * [df[j, "v$(v)_high"] for v in 1:num_var]
+    if twice
+
     uniform_lu_array!(obs, lbs, ubs)
 
     # Read formula

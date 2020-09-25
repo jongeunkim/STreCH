@@ -160,7 +160,7 @@ function solve_MINLP(nodes, obs, operators;
     v_lb, v_ub = get_vbounds(obs, operators)
     @info "bounds on v" v_lb v_ub
 
-    (c_lb, c_ub, e_lb, e_ub) = (-2, 2, -1e+09, 1e+09)
+    (c_lb, c_ub, e_lb, e_ub) = (-10, 10, -1e+09, 1e+09)
     e_weight = ones(num_obs)
     lambda = 0
     num_active_ub = 7
