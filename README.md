@@ -7,5 +7,7 @@ Execute `install_pkgs.jl` to install the required julia packages.
 
 `main_example.jl` is an example code to run MINLP and STreCH. 
 
+Once MINLP or STreCH is finished, it will create `df_sol.csv`, which includes the list of formulas and their objective values (MSE).
+
 The paper is working at Overleaf.
 
