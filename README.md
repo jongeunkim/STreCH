@@ -1,5 +1,5 @@
 Install SCIPOptSuite and Julia. 
-Refer to https://docs.google.com/document/d/1DCRQAZugv181wbx-RZYTGezuMRHp14NmeFdsRL8omHY/edit?usp=sharing.
+Refer to [link](https://docs.google.com/document/d/1DCRQAZugv181wbx-RZYTGezuMRHp14NmeFdsRL8omHY/edit?usp=sharing).
 
 Execute `install_pkgs.jl` to install the required julia packages.
 
