@@ -327,7 +327,7 @@ function add_value_defining_constraints(model, formulation, y, c, v, y_indexes, 
     model 
 end
 
-function add_redundancy_eliminating_constraints(model, formulation, y, c, y_indexes, nodes, nleaves, operA)
+function add_redundancy_eliminating_constraints(model, formulation, y, c, y_indexes, nodes, nleaves, operA, operU)
     ### Nested Operations, e.g., no exp(log(x)) or log(exp(x))
     if issubset(Set("EL"), operA)
         @constraints(model, begin
@@ -405,7 +405,7 @@ function get_MINLP_model(nodes, obs, operators, formulation)
     model = add_tree_defining_constraints(model, formulation, y, y_indexes, nodes, nleaves, operBU, operB, operU, operL, indvars)
     model = add_value_defining_constraints(model, formulation, y, c, v, y_indexes, bounds, nodes, nleaves, obs, num_obs, operA, operB, indvars)
     if occursin("-R", formulation) || occursin("-F", formulation) 
-        model = add_redundancy_eliminating_constraints(model, formulation, y, c, y_indexes, nodes, nleaves, operA)
+        model = add_redundancy_eliminating_constraints(model, formulation, y, c, y_indexes, nodes, nleaves, operA, operU)
     end
     if occursin("-S", formulation) || occursin("-F", formulation) 
         model = add_symmetry_breaking_constraints(model, y, v, nodes, nleaves, bounds)

@@ -1,7 +1,9 @@
-exp_*/
+*.sh
+*.out
+*.csv
 genobs.jl
 genproblist.jl
 run.jl
-run.sh
-runbatch*
-Equations.csv
+exp_*/
+example/*.csv
+example/*.log
