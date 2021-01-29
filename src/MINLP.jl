@@ -376,7 +376,7 @@ function add_implication_cuts(model)
 end
 
 function add_symmetry_breaking_constraints(model, y, v, nodes, nleaves, bounds)
-    @debug "Constrs to break symmetry $(formulation)"
+    @debug "Constrs to break symmetry"
     nodes_constr = intersect(get_nodes_complete(nodes), nleaves)
     @constraint(model, sym[n in nodes_constr], v[1,2*n] - v[1,2*n+1] >= (bounds["v_lb"] - bounds["v_ub"]) * (1 - y[n,'+'] - y[n,'*']))
     model
@@ -421,14 +421,14 @@ function save_solution(dir, model, df_vars, obs)
     num_results = JuMP.result_count(model)
     df_sol = DataFrame(index=Int[], formula=String[], objval=Float64[], treesize=Int[])
     if num_results > 0
-        for i in num_results:-1:1
+        for i in 1:num_results
             if JuMP.has_values(model; result = i)
                 df_vars.sol = JuMP.value.(JuMP.all_variables(model), result=i)
                 ysol, csol = get_ysol_csol(df_vars)
+                @debug "ysol and csol", ysol, csol
                 formula = get_formula(ysol, csol)[1]
                 objval = compute_err_formula(obs, formula, "mse"; err2Inf=true)
                 append!(df_sol, Dict("index"=>i, "formula"=>formula, "objval"=>objval, "treesize"=>length(ysol)))
-                CSV.write(dir * "df_sol.csv", df_sol)
             end
         end
         df_sol.time = repeat([JuMP.solve_time(model)], nrow(df_sol))
@@ -439,9 +439,13 @@ function save_solution(dir, model, df_vars, obs)
     CSV.write(dir * "df_sol.csv", df_sol)
 end
 
-function MINLP(dir, datafile, operators, maxdepth, timelimit, formulation)
+function MINLP(dir, datafile, operators, maxdepth, timelimit, formulation; loglevel="Info")
     io = open(dir * "log.log", "w+")
-    logger = SimpleLogger(io, Logging.Info)
+    if loglevel == "Debug"
+        logger = SimpleLogger(io, Logging.Debug)
+    else
+        logger = SimpleLogger(io, Logging.Info)
+    end
     global_logger(logger)
 
     ### Parameters

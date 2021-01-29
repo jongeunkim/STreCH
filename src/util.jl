@@ -67,6 +67,10 @@ function get_formula(ysol, csol)
     csol: Dict(nodeid -> constant value)
     """
 
+    if !(1 in keys(ysol))
+        return SortedDict(1=>"0")
+    end
+
     formula = SortedDict()
     for (n,o) in ysol
         if o isa Integer
