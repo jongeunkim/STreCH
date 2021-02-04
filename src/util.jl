@@ -48,6 +48,67 @@ function get_nodes_grandparents(nodes)
 end
 
 
+function fill_single_child(nodes)
+    """
+    Add a missing child to make a full (proper) binary tree which every node has 0 or 2 children
+    """
+    
+    nodes = Set(nodes)
+    updated = true
+    
+    while updated
+        updated = false
+        for n in collect(nodes)
+            if !isempty(intersect(nodes, Set([2*n, 2*n+1]))) && !issubset(Set([2*n, 2*n+1]), nodes)
+                union!(nodes, Set([2*n, 2*n+1]))
+                updated = true
+                break
+            end
+        end
+    end
+
+    OrderedSet(sort(collect(nodes)))
+end
+
+function expand_nodes(nodes)
+    """
+    Attach both children at each leaf
+    """
+
+    for n in collect(nodes)
+        union!(nodes, Set([n, 2*n, 2*n+1]))
+    end
+    OrderedSet(sort(collect(nodes)))
+end
+
+function get_nodes_by_depth(max_depth)
+    OrderedSet(1:(2^(max_depth+1)-1))
+end
+
+function get_unused_nodes(ysol, nodes_ground, stepsize)
+    """
+    Return nodes that is large enough to serach k-neighbor of ysol given max_depth and stepsize (distance)
+    """
+
+    nodes = Set(keys(ysol))
+
+    for i in 1:Int(floor((stepsize-1)/2))
+        nodes = expand_nodes(nodes)
+    end
+
+    nodes = fill_single_child(nodes)
+
+    nodes = setdiff(nodes_ground, nodes)
+ 
+    OrderedSet(sort(collect(nodes)))
+end
+
+
+
+
+
+
+
 function get_ysol_csol(df_vars)
     df_vars_y = filter(row -> row.vartype=="y" && row.sol > 0.5, df_vars)
     ysol = Dict(row.nodeid => row.operator for row in eachrow(df_vars_y))
@@ -154,7 +215,15 @@ function read_parameters(file)
     params = Dict{String,Any}()
 
     for line in eachline(file)
-        chunks = split(line, limit=2, keepempty=false)
+        if length(line) == 0 || line[1] == '#'
+            continue
+        end
+
+        chunks = split(line, limit=3, keepempty=false)
+        if length(chunks) < 2
+            continue
+        end
+
         key = filter(x -> !isspace(x), chunks[1]) 
         value = filter(x -> !isspace(x), chunks[2])
 
@@ -173,3 +242,25 @@ function read_parameters(file)
 
     params
 end
+
+function save_parameters(file, params)
+    open(file, "w+") do io
+        for (k,v) in params
+            write(io, "$k\t$v\n")
+        end
+    end
+end
+
+
+
+function open_logger(logfile, loglevel)
+    io = open(logfile, "a+")
+    if loglevel == "Debug"
+        logger = SimpleLogger(io, Logging.Debug)
+    else
+        logger = SimpleLogger(io, Logging.Info)
+    end
+    global_logger(logger)
+    io
+end
+

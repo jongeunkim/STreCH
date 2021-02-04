@@ -9,3 +9,6 @@ example/*.csv
 example/*.log
 test*.jl
 params.txt
+params/
+example/df_sol.csv
+example/log.log

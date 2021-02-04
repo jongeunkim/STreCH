@@ -29,11 +29,11 @@ function get_vbounds(obs, operators)
     v_lb, v_ub
 end
 
-function get_bounds(obs, operators)
+function get_bounds(obs, operators, params)
     bounds = Dict()
     v_lb, v_ub = get_vbounds(obs, operators)
     merge!(bounds, Dict("v_lb"=>v_lb, "v_ub"=>v_ub))
-    merge!(bounds, Dict("c_lb"=>-2.0, "c_ub"=>2.0))
+    merge!(bounds, Dict("c_lb"=>get(params, "DBL_CONSTANT_LB", -2.0), "c_ub"=>get(params, "DBL_CONSTANT_UB", 2.0)))
 
     bounds["cst_abslb"] = 1/(4*pi)
     bounds["mult_child_abslb"] = 0.01
@@ -70,10 +70,14 @@ function get_df_vars(nodes, y_indexes, num_obs)
     df_vars
 end
 
-function create_decision_variables(model, nodes, operA, y_indexes, num_obs, bounds)
+function create_decision_variables(model, nodes, operA, y_indexes, num_obs, bounds, params)
     @variable(model, y[n in nodes, o in operA; (n,o) in y_indexes], Bin)
     @variable(model, bounds["v_lb"] <= v[1:num_obs, nodes] <= bounds["v_ub"])
-    @variable(model, bounds["c_lb"] <= c[nodes] <= bounds["c_ub"])
+    if get(params, "INT_CONSTANT_ISINTEGER", 0) == 1
+        @variable(model, bounds["c_lb"] <= c[nodes] <= bounds["c_ub"], Int)
+    else
+        @variable(model, bounds["c_lb"] <= c[nodes] <= bounds["c_ub"])
+    end
     @variable(model, -1e+09 <= e[1:num_obs] <= 1e+09)
     df_vars = get_df_vars(nodes, y_indexes, num_obs)
     model, y, c, v, e, df_vars
@@ -81,6 +85,11 @@ end
 
 function set_objective_function(model, e, num_obs)
     @objective(model, Min, 1 / num_obs * sum(e.^2))
+    model
+end
+
+function limit_number_of_constant(model, y, y_indexes, numcst)
+    @constraint(model, sum(y for (n,o) in y_indexes if o == 'c') <= numcst)
     model
 end
 
@@ -136,7 +145,7 @@ end
 
 function add_value_defining_constraints(model, formulation, y, c, v, y_indexes, bounds, nodes, nleaves, obs, num_obs, operA, operB, indvars)
     ### Constrs for defining domain bounds
-    @debug "Constrs for defining domain bounds"
+    @info "Constrs for defining domain bounds"
     
     if 'C' in operA && bounds["cst_abslb"] > 0
         @constraint(model, domain_cst[n in nodes], c[n]^2 >= bounds["cst_abslb"]^2 * y[n,'C'])
@@ -185,7 +194,7 @@ function add_value_defining_constraints(model, formulation, y, c, v, y_indexes, 
     c_lb = bounds["c_lb"]
     c_ub = bounds["c_ub"]
     if occursin("Coz", formulation)
-        @debug "Constrs for defining v (Cozad) $(formulation)"
+        @info "Constrs for defining v (Cozad) $(formulation)"
 
         @constraints(model, begin
             v_inactive_ub[i in 1:num_obs, n in nodes], v[i,n] <= v_ub * sum(y[n1,o] for (n1,o) in y_indexes if n1 == n)
@@ -211,7 +220,7 @@ function add_value_defining_constraints(model, formulation, y, c, v, y_indexes, 
             end)
         end
     elseif occursin("Imp", formulation)
-        @debug "Constrs for defining v (New) $(formulation)"
+        @info "Constrs for defining v (New) $(formulation)"
 
         @constraints(model, begin
             v_indvars_ub[i in 1:num_obs, n1 in nodes],
@@ -343,14 +352,14 @@ function add_redundancy_eliminating_constraints(model, formulation, y, c, y_inde
 
         # no x-cst, x/cst, and no unary operation with a constant
         if occursin("Coz", formulation)
-            @debug "Constrs to remove redundancy (Cozad version) $(formulation)"
+            @info "Constrs to remove redundancy (Cozad version) $(formulation)"
             @constraints(model, begin
                 redun_cst_unary[n in nleaves], y[2*n+1,'C'] + sum(y[nn,o] for (nn,o) in y_indexes if nn == n && o in operU) <= 1
                 redun_cst_minus[n in nleaves], y[2*n+1,'C'] + sum(y[nn,o] for (nn,o) in y_indexes if nn == n && o == '-') <= 1
                 redun_cst_div[n in nleaves], y[2*n+1,'C'] + sum(y[nn,o] for (nn,o) in y_indexes if nn == n && o == 'D') <= 1
             end)
         elseif occursin("Imp", formulation)
-            @debug "Constrs to remove redundancy (New version) $(formulation)"
+            @info "Constrs to remove redundancy (New version) $(formulation)"
             oper = intersect(operA, "+*")
             @constraint(model, redun_cst_rhs[n in nleaves], y[2*n+1,'C'] <= sum(y[n,o] for o in intersect(operA, "+*")))
         end
@@ -358,7 +367,7 @@ function add_redundancy_eliminating_constraints(model, formulation, y, c, y_inde
 
     ### Association Properties
     if occursin("Imp", formulation)
-        @debug "Constrs to remove redundancy (New version 2) $(formulation)"
+        @info "Constrs to remove redundancy (New version 2) $(formulation)"
         nodes_constr = intersect(get_nodes_complete(nodes), get_nodes_grandparents(nodes))
         if issubset("+-", operA)
             @constraint(model, redun_pm[n in nodes_constr], y[n,'+'] + y[2*n+1,'-'] <= 1)
@@ -376,13 +385,13 @@ function add_implication_cuts(model)
 end
 
 function add_symmetry_breaking_constraints(model, y, v, nodes, nleaves, bounds)
-    @debug "Constrs to break symmetry"
+    @info "Constrs to break symmetry"
     nodes_constr = intersect(get_nodes_complete(nodes), nleaves)
     @constraint(model, sym[n in nodes_constr], v[1,2*n] - v[1,2*n+1] >= (bounds["v_lb"] - bounds["v_ub"]) * (1 - y[n,'+'] - y[n,'*']))
     model
 end
 
-function get_MINLP_model(nodes, obs, operators, formulation)
+function get_MINLP_model(nodes, obs, operators, formulation, params)
     ### Declare useful parameters 
     leaves		= get_leaves(nodes)
     nleaves		= get_nonleaves(nodes)   
@@ -398,9 +407,12 @@ function get_MINLP_model(nodes, obs, operators, formulation)
 
     ### Create a model
     model = Model() 
-    bounds = get_bounds(obs, operators)
-    model, y, c, v, e, df_vars = create_decision_variables(model, nodes, operA, y_indexes, num_obs, bounds)
+    bounds = get_bounds(obs, operators, params)
+    model, y, c, v, e, df_vars = create_decision_variables(model, nodes, operA, y_indexes, num_obs, bounds, params)
     model = set_objective_function(model, e, num_obs)
+    if get(params, "INT_NUM_CONSTANT", Inf) < length(nodes) / 2
+        model = limit_number_of_constant(model, y, y_indexes, get(params, "INT_NUM_CONSTANT", Inf))
+    end
     model = add_e_deining_constraints(model, v, e, obs, num_obs)
     model = add_tree_defining_constraints(model, formulation, y, y_indexes, nodes, nleaves, operBU, operB, operU, operL, indvars)
     model = add_value_defining_constraints(model, formulation, y, c, v, y_indexes, bounds, nodes, nleaves, obs, num_obs, operA, operB, indvars)
@@ -414,10 +426,10 @@ function get_MINLP_model(nodes, obs, operators, formulation)
     #     model = add_implication_cuts(model)
     # end
 
-    model, df_vars
+    model, df_vars, bounds
 end
 
-function save_solution(dir, model, df_vars, obs)
+function save_solution(dir, model, df_vars, obs; save_df_sol=true, save_df_vars=false)
     num_results = JuMP.result_count(model)
     df_sol = DataFrame(index=Int[], formula=String[], objval=Float64[], treesize=Int[])
     if num_results > 0
@@ -425,7 +437,7 @@ function save_solution(dir, model, df_vars, obs)
             if JuMP.has_values(model; result = i)
                 df_vars.sol = JuMP.value.(JuMP.all_variables(model), result=i)
                 ysol, csol = get_ysol_csol(df_vars)
-                @debug "ysol and csol", ysol, csol
+                @info "ysol and csol", ysol, csol
                 formula = get_formula(ysol, csol)[1]
                 objval = compute_err_formula(obs, formula, "mse"; err2Inf=true)
                 append!(df_sol, Dict("index"=>i, "formula"=>formula, "objval"=>objval, "treesize"=>length(ysol)))
@@ -435,25 +447,41 @@ function save_solution(dir, model, df_vars, obs)
         df_sol.bnbnodes = repeat([JuMP.node_count(model)], nrow(df_sol))
     end
 
-    # CSV.write(dir * "df_vars.csv", df_vars)
-    CSV.write(dir * "df_sol.csv", df_sol)
+    ### Save the summary of the list of the solutions
+    sort!(df_sol, ["objval"])
+    if save_df_sol
+        CSV.write(dir * "df_sol.csv", df_sol)
+    end
+
+    ### Save the best solution
+    if num_results > 0
+        df_vars.sol = JuMP.value.(JuMP.all_variables(model), result=df_sol[1,"index"])
+        ysol, csol = get_ysol_csol(df_vars)
+        if save_df_vars
+            CSV.write(dir * "df_vars.csv", df_vars)
+        end
+        
+        return df_sol[1,"objval"], ysol, csol, df_vars
+    else
+        return Inf, Dict(), Dict(), df_vars
+    end
 end
 
-function MINLP(dir, datafile, operators, maxdepth, timelimit, formulation; loglevel="Info")
-    io = open(dir * "log.log", "w+")
-    if loglevel == "Debug"
-        logger = SimpleLogger(io, Logging.Debug)
-    else
-        logger = SimpleLogger(io, Logging.Info)
-    end
-    global_logger(logger)
+function MINLP(dir; datafile="data.txt", paramfile="params.txt")
+    params = read_parameters(dir * paramfile)
+    operators = params["OPERATORS"]
+    maxdepth = params["INT_MAXDEPTH"]
+    timelimit = params["DBL_TIMELIMIT"]
+    formulation = params["FORMULATION"]
+    loglevel = params["LOGLEVEL"]
+    io = open_logger(dir * "log.log", loglevel)
 
     ### Parameters
     nodes = OrderedSet(1:(2^(maxdepth+1)-1))
     obs = DelimitedFiles.readdlm(dir * datafile)
     
     ### Build a MINLP model
-    model, df_vars = get_MINLP_model(nodes, obs, operators, formulation)
+    model, df_vars, bounds = get_MINLP_model(nodes, obs, operators, formulation, params)
     
     ### Set the MINLP solver
     set_optimizer(model, SCIP.Optimizer)
@@ -466,4 +494,8 @@ function MINLP(dir, datafile, operators, maxdepth, timelimit, formulation; logle
     save_solution(dir, model, df_vars, obs)
 
     close(io)
+end
+
+function change_c_variables(model, df_vars, params)
+
 end
