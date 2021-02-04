@@ -1,4 +1,4 @@
-Install Julia. Available at [Julia Download](https://julialang.org/downloads/).
+Install Julia. Available at [Julia Download](https://julialang.org/downloads/). This code is compatible with Julia 1.5.3.
 
 Install SCIPOptSuite. Available at [SCIPOptSuite Download](https://www.scipopt.org/index.php#download). 
 Before you download, please check which version is supported by the SCIP package in Julia [SCIP.jl](https://github.com/scipopt/SCIP.jl).
