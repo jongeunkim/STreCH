@@ -7,3 +7,5 @@ run.jl
 exp_*/
 example/*.csv
 example/*.log
+test*.jl
+params.txt

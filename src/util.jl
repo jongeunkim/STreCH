@@ -149,3 +149,27 @@ function compute_err_formula(obs, formula, errmodel; err2Inf=false)
         return compute_mse(y_pred, y_true, model=errmodel)
     end
 end
+
+function read_parameters(file)
+    params = Dict{String,Any}()
+
+    for line in eachline(file)
+        chunks = split(line, limit=2, keepempty=false)
+        key = filter(x -> !isspace(x), chunks[1]) 
+        value = filter(x -> !isspace(x), chunks[2])
+
+        if length(key) >=4
+            if "DBL_" == key[1:4]
+                value = parse(Float64, value)
+            elseif "INT_" == key[1:4]
+                value = parse(Int, value)
+            else
+                nothing
+            end
+        end
+
+        params[key] = value
+    end
+
+    params
+end
