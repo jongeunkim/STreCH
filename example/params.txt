@@ -1,0 +1,30 @@
+# Use '#' for a comment.
+
+# Basic Parameters
+FORMULATION         Imp-F
+DBL_TIMELIMIT       100
+LOGLEVEL            Info
+INT_MAXDEPTH        2
+
+# Opeartors
+# Binary:   + - * D
+# Unary:    R (sqrt), E (exp), L (log), S(arccos(sin(x)) = sqrt(1-x^2))
+# Constant: C (general), P (pi)
+OPERATORS           +-*DC
+
+# MINLP Parameters
+INT_NUM_CONSTANT        1
+INT_CONSTANT_ISINTEGER  1
+DBL_CONSTANT_UB         2
+DBL_CONSTANT_LB        -2
+
+# STreCH Parameters
+INT_SOLU_DIST_INIT      3
+INT_SOLU_DIST_INCR      2
+INT_SOLU_DIST_MAX       7
+INT_NODELIMIT_INIT      10000
+INT_NODELIMIT_MAX       10000000
+INT_FIXLEVEL_INIT       1
+INT_FIXLEVEL_MAX        2
+  
+

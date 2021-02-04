@@ -1,14 +1,11 @@
+exp_*/
+params/
 *.sh
 *.out
 *.csv
 genobs.jl
 genproblist.jl
 run.jl
-exp_*/
-example/*.csv
-example/*.log
 test*.jl
-params.txt
-params/
 example/df_sol.csv
 example/log.log
