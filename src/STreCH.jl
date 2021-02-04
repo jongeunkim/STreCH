@@ -143,7 +143,7 @@ function STreCH(dir; datafile="data.txt", paramfile="params.txt")
     
     ### Solve an initial problem
     model, df_vars, bounds = get_MINLP_model(nodes, obs, params["OPERATORS"], params["FORMULATION"], params)
-    model = reset_variables(model, df_vars, bounds, unused_nodes=2:1000)
+    model = reset_variables(model, df_vars, bounds, unused_nodes=8:1000)
     set_optimizer(model, SCIP.Optimizer)
 
     ### Set absgap, timelimit
