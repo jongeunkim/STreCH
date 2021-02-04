@@ -1,8 +1,8 @@
 Install Julia. Available at [Julia Download](https://julialang.org/downloads/). This code is compatible with Julia 1.5.3.
 
 Install SCIPOptSuite. Available at [SCIPOptSuite Download](https://www.scipopt.org/index.php#download). 
-Before you download, please check which version is supported by the SCIP package in Julia [SCIP.jl](https://github.com/scipopt/SCIP.jl).
-Version 7.0.2 is the most recent supported version [SCIP.jl News](https://github.com/scipopt/SCIP.jl/blob/master/NEWS.md) (confirmed on 02/04/2021).
+Before you download, please check which version is supported by the SCIP package in Julia [SCIP.jl News](https://github.com/scipopt/SCIP.jl/blob/master/NEWS.md).
+On 02/04/2021, the most recent version SCIP v.7.0.2 is supported.
 
 Execute `install_pkgs.jl` to install the required julia packages.
 
