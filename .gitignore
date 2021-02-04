@@ -7,6 +7,4 @@ genobs.jl
 genproblist.jl
 run.jl
 test*.jl
-example/df_sol.csv
-example/log.log
 collect_result.jl
