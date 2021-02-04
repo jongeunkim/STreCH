@@ -119,11 +119,11 @@ function update_STreCH_parameters(params, mindist, maxdist, fixlevel, nodelimit)
     mindist, maxdist, fixlevel, nodelimit
 end
 
-function update_df_sol(df_sol, obs, df_vars, num_iter)
+function update_df_sol(df_sol, obs, df_vars, num_iter, time)
     ysol, csol = get_ysol_csol(df_vars)
     formula = get_formula(ysol, csol)[1]
     objval = compute_err_formula(obs, formula, "mse"; err2Inf=true)
-    append!(df_sol, Dict("index"=>num_iter, "formula"=>formula, "objval"=>objval, "treesize"=>length(ysol)))
+    append!(df_sol, Dict("index"=>num_iter, "formula"=>formula, "objval"=>objval, "treesize"=>length(ysol), "time"=>time))
     df_sol
 end
 
@@ -156,7 +156,7 @@ function STreCH(dir; datafile="data.txt", paramfile="params.txt")
     
     ### Save the result
     objval_best, ysol_best, csol_best, df_vars_best = save_solution(dir, model, df_vars, obs, save_df_sol=false)
-    df_sol = update_df_sol(df_sol, obs, df_vars_best, num_iter)
+    df_sol = update_df_sol(df_sol, obs, df_vars_best, num_iter, time() - t_begin)
     CSV.write(dir * "df_sol.csv", df_sol)
 
     ### Improve
@@ -183,7 +183,7 @@ function STreCH(dir; datafile="data.txt", paramfile="params.txt")
 
         ### Read solution
         objval_new, ysol_new, csol_new, df_vars_new = save_solution(dir, model, df_vars, obs, save_df_sol=false)
-        df_sol = update_df_sol(df_sol, obs, df_vars_new, num_iter)
+        df_sol = update_df_sol(df_sol, obs, df_vars_new, num_iter, time() - t_begin)
         CSV.write(dir * "df_sol.csv", df_sol)
 
         ### Compare with the best solution and update paramters for the next iteration

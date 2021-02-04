@@ -9,3 +9,4 @@ run.jl
 test*.jl
 example/df_sol.csv
 example/log.log
+collect_result.jl
