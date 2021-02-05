@@ -146,7 +146,12 @@ end
 function add_value_defining_constraints(model, formulation, y, c, v, y_indexes, bounds, nodes, nleaves, obs, num_obs, operA, operB, indvars)
     ### Constrs for defining domain bounds
     @info "Constrs for defining domain bounds"
-    
+
+    v_lb = bounds["v_lb"]
+    v_ub = bounds["v_ub"]
+    c_lb = bounds["c_lb"]
+    c_ub = bounds["c_ub"]
+
     if 'C' in operA && bounds["cst_abslb"] > 0
         @constraint(model, domain_cst[n in nodes], c[n]^2 >= bounds["cst_abslb"]^2 * y[n,'C'])
     end
@@ -189,10 +194,6 @@ function add_value_defining_constraints(model, formulation, y, c, v, y_indexes, 
     end
 
     ### Constrs for defining v
-    v_lb = bounds["v_lb"]
-    v_ub = bounds["v_ub"]
-    c_lb = bounds["c_lb"]
-    c_ub = bounds["c_ub"]
     if occursin("Coz", formulation)
         @info "Constrs for defining v (Cozad) $(formulation)"
 

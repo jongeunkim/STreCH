@@ -1,3 +1,4 @@
+.gitignore
 exp_*/
 params/
 *.sh
