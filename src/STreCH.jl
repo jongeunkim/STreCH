@@ -136,7 +136,7 @@ end
 function STreCH(dir; datafile="data.txt", paramfile="params.txt")
     EPSILON = 1e-12
     params = read_parameters(dir * paramfile)
-    df_sol = DataFrame(index=Int[], formula=String[], objval=Float64[], treesize=Int[])
+    df_sol = DataFrame(index=Int[], formula=String[], objval=Float64[], treesize=Int[], time=Float64[])
 
     io = open_logger(dir * "log.log", params["LOGLEVEL"])
 
