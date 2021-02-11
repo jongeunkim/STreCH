@@ -1,12 +1,2 @@
 .gitignore
-exp_*/
-params/
-*.sh
-*.out
-*.csv
-genobs.jl
-genproblist.jl
-run.jl
-test*.jl
-collect_result.jl
-experiments/
+exp/

@@ -1,0 +1,1 @@
+x1[0,1)	x2[0,1)	x3[1,2)	x4[1,2)	n*alpha/(1-(n*alpha/3))*epsilon*Ef

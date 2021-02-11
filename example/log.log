@@ -1,248 +1,34 @@
 ┌ Info: Constrs for defining domain bounds
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:139
+└ @ Main /home/ac.jnkim/development/symbolic/src/MINLP.jl:155
 ┌ Info: Constrs for defining v (New) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:214
+└ @ Main /home/ac.jnkim/development/symbolic/src/MINLP.jl:231
 ┌ Info: Constrs to remove redundancy (New version) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:353
+└ @ Main /home/ac.jnkim/development/symbolic/src/MINLP.jl:370
 ┌ Info: Constrs to remove redundancy (New version 2) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:361
+└ @ Main /home/ac.jnkim/development/symbolic/src/MINLP.jl:378
 ┌ Info: Constrs to break symmetry
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:379
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 'C',4 => 2,2 => '*',3 => '*',5 => 'C',6 => 1,1 => '*'), Dict{Any,Any}(7 => -1.783125014166449,5 => -0.5608398432404588))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:428
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 'C',4 => 1,2 => '*',3 => '+',5 => 'C',6 => 2,1 => '*'), Dict{Any,Any}(7 => -0.07957746526278697,5 => 1.0232597333651487))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:428
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 'C',4 => 'C',2 => '-',3 => '*',5 => 2,6 => 1,1 => '*'), Dict{Any,Any}(7 => -1.0232157949506167,4 => 0.07957746526276566))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:428
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 'C',4 => 'C',2 => '-',3 => '*',5 => 2,6 => 1,1 => '*'), Dict{Any,Any}(7 => -0.9939149897044854,4 => -0.0795774652627621))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:428
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 'C',4 => 'C',2 => '-',3 => '*',5 => 2,6 => 1,1 => '*'), Dict{Any,Any}(7 => -1.359785126497633,4 => 0.8536056763792343))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:428
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 1,4 => 2,2 => '+',3 => 'D',5 => 'C',6 => 'C',1 => 'D'), Dict{Any,Any}(5 => -0.21332544352354077,6 => 0.8378500837431611))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:428
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 2,4 => 1,2 => '+',3 => '+',5 => 2,6 => 2,1 => '+'), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:428
+└ @ Main /home/ac.jnkim/development/symbolic/src/MINLP.jl:396
+┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 2,4 => 2,2 => '*',3 => 'D',5 => 1,6 => 2,1 => '+'), Dict{Any,Any}())
+└ @ Main /home/ac.jnkim/development/symbolic/src/MINLP.jl:448
+┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 1,4 => 'C',2 => '-',3 => '-',5 => 2,6 => 'C',1 => '*'), Dict{Any,Any}(4 => -0.15694228754230855,6 => -0.17084552757552451))
+└ @ Main /home/ac.jnkim/development/symbolic/src/MINLP.jl:448
+┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 1,4 => 2,2 => '*',3 => '-',5 => 'C',6 => 'C',1 => '*'), Dict{Any,Any}(5 => -1.0337099152498275,6 => -0.20946077236586827))
+└ @ Main /home/ac.jnkim/development/symbolic/src/MINLP.jl:448
+┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 1,4 => 2,2 => '*',3 => '-',5 => 'C',6 => 'C',1 => '*'), Dict{Any,Any}(5 => -1.0337099462861454,6 => -0.20946067013146663))
+└ @ Main /home/ac.jnkim/development/symbolic/src/MINLP.jl:448
+┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 1,4 => 2,2 => '*',3 => '-',5 => 'C',6 => 'C',1 => '*'), Dict{Any,Any}(5 => -1.0337099463151669,6 => -0.20946067012047603))
+└ @ Main /home/ac.jnkim/development/symbolic/src/MINLP.jl:448
+┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 2,4 => 1,2 => '*',3 => '-',5 => 'C',6 => 'C',1 => '*'), Dict{Any,Any}(5 => -0.9549356105425175,6 => -0.44719105385080987))
+└ @ Main /home/ac.jnkim/development/symbolic/src/MINLP.jl:448
+┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 2,4 => 1,2 => '*',3 => '-',5 => 'C',6 => 'C',1 => '*'), Dict{Any,Any}(5 => -0.9549356221703955,6 => -0.4471910117607695))
+└ @ Main /home/ac.jnkim/development/symbolic/src/MINLP.jl:448
+┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 'C',4 => 1,2 => '*',3 => '+',5 => 'C',6 => 2,1 => '*'), Dict{Any,Any}(7 => 0.14929473527016143,5 => 1.0497648762909335))
+└ @ Main /home/ac.jnkim/development/symbolic/src/MINLP.jl:448
+┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 2,4 => 1,2 => '*',3 => 'D',5 => 'C',6 => 'C',1 => 'D'), Dict{Any,Any}(5 => 1.9284214180001307,6 => 1.7535645536755875))
+└ @ Main /home/ac.jnkim/development/symbolic/src/MINLP.jl:448
+┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 'C',4 => 1,2 => '*',3 => '+',5 => 'C',6 => 2,1 => '*'), Dict{Any,Any}(7 => -1.0100000000018243,5 => 1.63563546587267))
+└ @ Main /home/ac.jnkim/development/symbolic/src/MINLP.jl:448
+┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 2,4 => 2,2 => '+',3 => 'D',5 => 'C',6 => 2,1 => '-'), Dict{Any,Any}(5 => 1.9999999364145686))
+└ @ Main /home/ac.jnkim/development/symbolic/src/MINLP.jl:448
 ┌ Info: ("ysol and csol", Dict(1 => 2), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:428
-┌ Info: ("ysol and csol", Dict(1 => 1), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:428
-┌ Info: Constrs for defining domain bounds
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:143
-┌ Info: Constrs for defining v (New) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:218
-┌ Info: Constrs to remove redundancy (New version 2) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:365
-┌ Info: Constrs to break symmetry
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:383
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 1,4 => 1,2 => '*',3 => 'D',5 => 2,6 => 1,1 => 'D'), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 1,4 => 1,2 => '*',3 => 'D',5 => 2,6 => 1,1 => '+'), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 2,4 => 1,2 => '*',3 => 'D',5 => 2,6 => 1,1 => '+'), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 'C',4 => 2,2 => '+',3 => '+',5 => 'C',6 => 1,1 => '*'), Dict{Any,Any}(7 => -1.0,5 => 1.0))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 'C',2 => 2,3 => '*',6 => 1,1 => '-'), Dict{Any,Any}(7 => -2.0000000002598397))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict{Int64,Any}(4 => 1,2 => '+',3 => 2,5 => 'C',1 => '+'), Dict{Any,Any}(5 => 2.0))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict(1 => 1), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: Constrs for defining domain bounds
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:143
-┌ Info: Constrs for defining v (New) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:218
-┌ Info: Constrs to remove redundancy (New version 2) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:365
-┌ Info: Constrs to break symmetry
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:383
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 1,4 => 1,2 => '*',3 => 'D',5 => 2,6 => 1,1 => 'D'), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 1,4 => 1,2 => '*',3 => 'D',5 => 2,6 => 1,1 => '+'), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 2,4 => 1,2 => '*',3 => 'D',5 => 2,6 => 1,1 => '+'), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 'C',4 => 2,2 => '+',3 => '+',5 => 'C',6 => 1,1 => '*'), Dict{Any,Any}(7 => -1.0,5 => 1.0))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 'C',2 => 2,3 => '*',6 => 1,1 => '-'), Dict{Any,Any}(7 => -2.0000000002598397))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict{Int64,Any}(4 => 1,2 => '+',3 => 2,5 => 'C',1 => '+'), Dict{Any,Any}(5 => 2.0))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict(1 => 1), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: Constrs for defining domain bounds
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:143
-┌ Info: Constrs for defining v (New) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:218
-┌ Info: Constrs to remove redundancy (New version 2) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:365
-┌ Info: Constrs to break symmetry
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:383
-┌ Info: ("ysol and csol", Dict(1 => 2), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict(1 => 2), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict(1 => 2), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: num_iter = 2, fixlevel = 1, mindist=0, maxdist=3, nodelimit=10000
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/STreCH.jl:166
-┌ Info: Constrs for defining domain bounds
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:143
-┌ Info: Constrs for defining v (New) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:218
-┌ Info: Constrs to remove redundancy (New version 2) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:365
-┌ Info: Constrs to break symmetry
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:383
-┌ Info: num_iter = 2 , OPTIMAL
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/STreCH.jl:182
-┌ Info: ("ysol and csol", Dict{Int64,Any}(2 => 1,3 => 'C',1 => '+'), Dict{Any,Any}(3 => 2.0))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict(1 => 2), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: num_iter = 3, fixlevel = 1, mindist=0, maxdist=3, nodelimit=10000
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/STreCH.jl:166
-┌ Info: Constrs for defining domain bounds
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:143
-┌ Info: Constrs for defining v (New) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:218
-┌ Info: Constrs to remove redundancy (New version 2) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:365
-┌ Info: Constrs to break symmetry
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:383
-┌ Info: num_iter = 3 , OPTIMAL
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/STreCH.jl:182
-┌ Info: ("ysol and csol", Dict{Int64,Any}(2 => 1,3 => 1,1 => '+'), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict{Int64,Any}(2 => 1,3 => 'C',1 => '+'), Dict{Any,Any}(3 => 2.0))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: num_iter = 4, fixlevel = 1, mindist=0, maxdist=3, nodelimit=10000
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/STreCH.jl:166
-┌ Info: Constrs for defining domain bounds
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:143
-┌ Info: Constrs for defining v (New) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:218
-┌ Info: Constrs to remove redundancy (New version 2) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:365
-┌ Info: Constrs to break symmetry
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:383
-┌ Info: num_iter = 4 , OPTIMAL
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/STreCH.jl:182
-┌ Info: ("ysol and csol", Dict{Int64,Any}(4 => 1,2 => '*',3 => 1,5 => 2,1 => '+'), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict{Int64,Any}(2 => 1,3 => 1,1 => '+'), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: num_iter = 5, fixlevel = 1, mindist=0, maxdist=3, nodelimit=10000
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/STreCH.jl:166
-┌ Info: Constrs for defining domain bounds
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:143
-┌ Info: Constrs for defining v (New) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:218
-┌ Info: Constrs to remove redundancy (New version 2) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:365
-┌ Info: Constrs to break symmetry
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:383
-┌ Info: num_iter = 5 , OPTIMAL
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/STreCH.jl:182
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 2,4 => 1,2 => '*',3 => 'D',5 => 2,6 => 'C',1 => '+'), Dict{Any,Any}(6 => 2.0))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict{Int64,Any}(4 => 1,2 => '*',3 => 1,5 => 2,1 => '+'), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: num_iter = 6, fixlevel = 1, mindist=0, maxdist=3, nodelimit=10000
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/STreCH.jl:166
-┌ Info: Constrs for defining domain bounds
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:143
-┌ Info: Constrs for defining v (New) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:218
-┌ Info: Constrs to remove redundancy (New version 2) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:365
-┌ Info: Constrs to break symmetry
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:383
-┌ Info: num_iter = 6 , OPTIMAL
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/STreCH.jl:182
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 1,4 => 1,2 => '*',3 => 'D',5 => 2,6 => 'C',1 => '+'), Dict{Any,Any}(6 => -2.0))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 2,4 => 1,2 => '*',3 => 'D',5 => 2,6 => 'C',1 => '+'), Dict{Any,Any}(6 => -1.0))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 2,4 => 1,2 => '*',3 => 'D',5 => 2,6 => 'C',1 => '+'), Dict{Any,Any}(6 => -2.0))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 2,4 => 1,2 => '*',3 => 'D',5 => 2,6 => 2,1 => '+'), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: num_iter = 7, fixlevel = 1, mindist=0, maxdist=3, nodelimit=10000
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/STreCH.jl:166
-┌ Info: Constrs for defining domain bounds
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:143
-┌ Info: Constrs for defining v (New) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:218
-┌ Info: Constrs to remove redundancy (New version 2) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:365
-┌ Info: Constrs to break symmetry
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:383
-┌ Info: num_iter = 7 , OPTIMAL
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/STreCH.jl:182
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 1,4 => 1,2 => '*',3 => 'D',5 => 2,6 => 'C',1 => '+'), Dict{Any,Any}(6 => 1.0))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 1,4 => 1,2 => '*',3 => 'D',5 => 2,6 => 'C',1 => '+'), Dict{Any,Any}(6 => -2.0))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 2,4 => 1,2 => '*',3 => 'D',5 => 2,6 => 'C',1 => '+'), Dict{Any,Any}(6 => -1.0))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 2,4 => 1,2 => '*',3 => 'D',5 => 2,6 => 'C',1 => '+'), Dict{Any,Any}(6 => -2.0))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 2,4 => 1,2 => '*',3 => 'D',5 => 2,6 => 2,1 => '+'), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: num_iter = 8, fixlevel = 1, mindist=0, maxdist=3, nodelimit=10000
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/STreCH.jl:166
-┌ Info: Constrs for defining domain bounds
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:143
-┌ Info: Constrs for defining v (New) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:218
-┌ Info: Constrs to remove redundancy (New version 2) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:365
-┌ Info: Constrs to break symmetry
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:383
-┌ Info: num_iter = 8 , OPTIMAL
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/STreCH.jl:182
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 1,4 => 1,2 => '*',3 => 'D',5 => 2,6 => 'C',1 => '+'), Dict{Any,Any}(6 => -1.0000000000000107))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 1,4 => 1,2 => '*',3 => 'D',5 => 2,6 => 'C',1 => '+'), Dict{Any,Any}(6 => -1.0))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 1,4 => 1,2 => '*',3 => 'D',5 => 2,6 => 'C',1 => '+'), Dict{Any,Any}(6 => 2.0))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 1,4 => 1,2 => '*',3 => 'D',5 => 2,6 => 2,1 => '+'), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: num_iter = 9, fixlevel = 2, mindist=0, maxdist=3, nodelimit=10000
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/STreCH.jl:166
-┌ Info: Constrs for defining domain bounds
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:143
-┌ Info: Constrs for defining v (New) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:218
-┌ Info: Constrs to remove redundancy (New version 2) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:365
-┌ Info: Constrs to break symmetry
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:383
-┌ Info: num_iter = 9 , OPTIMAL
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/STreCH.jl:182
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 'C',4 => 1,2 => '*',3 => '+',5 => 2,6 => 'C',1 => '+'), Dict{Any,Any}(7 => -1.0,6 => 1.0))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 1,4 => 1,2 => '*',3 => 'D',5 => 2,6 => 'C',1 => '+'), Dict{Any,Any}(6 => 1.0))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:432
-┌ Info: Constrs for defining domain bounds
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:148
-┌ Info: Constrs for defining v (New) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:223
-┌ Info: Constrs to remove redundancy (New version 2) Imp-F
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:370
-┌ Info: Constrs to break symmetry
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:388
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 'C',4 => 1,2 => '*',3 => '+',5 => 2,6 => 'C',1 => '-'), Dict{Any,Any}(7 => -1.0000000000000009,6 => 1.0))
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:440
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 1,4 => 1,2 => '*',3 => 'D',5 => 2,6 => 1,1 => '+'), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:440
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 1,4 => 1,2 => '*',3 => 'D',5 => 2,6 => 2,1 => '+'), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:440
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 1,4 => 1,2 => '*',3 => 'D',5 => 1,6 => 2,1 => '-'), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:440
-┌ Info: ("ysol and csol", Dict{Int64,Any}(7 => 1,4 => 1,2 => '*',3 => '-',5 => 1,6 => 2,1 => '-'), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:440
-┌ Info: ("ysol and csol", Dict(1 => 1), Dict{Any,Any}())
-└ @ Main /home/ac.jnkim/development/symbolic-dev/src/MINLP.jl:440
+└ @ Main /home/ac.jnkim/development/symbolic/src/MINLP.jl:448

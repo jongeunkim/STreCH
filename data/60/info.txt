@@ -1,0 +1,1 @@
+x1[1,5)	x2[1,5)	x3[1,5)	sigma_den/epsilon*1/(1+chi)

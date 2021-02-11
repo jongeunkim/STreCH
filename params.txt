@@ -1,0 +1,36 @@
+### Use '#' for a comment.
+
+### Basic Parameters
+FORMULATION         Imp-F       # Formulations, {Coz,Imp}-{F,R,S,N}
+DBL_TIMELIMIT       100         # time limit in seconds
+LOGLEVEL            Info        # Info or Debug
+INT_MAXDEPTH        2           # maximum depth   
+
+
+### Opeartors
+# Binary:   + (addition) - (subtraction) * (multiplication) D (division)
+# Unary:    R (sqrt), E (exp), L (log), S (arccos(sin(x)) = sqrt(1-x^2))
+# Constant: C (general), P (pi)
+
+OPERATORS           +-*DRC
+
+
+### MINLP Parameters
+
+INT_NUM_CONSTANT        999         # maximum number of constants
+INT_CONSTANT_ISINTEGER  0           # 1: force constant to be an integer, 0: float
+DBL_CONSTANT_UB         2           # the upper bound of constant
+DBL_CONSTANT_LB        -2           # the lower bound of constant
+
+
+### STreCH Parameters
+
+INT_SOLU_DIST_INIT      3           # k_init: the initial distance in STreCH
+INT_SOLU_DIST_INCR      2           # if the neighbor search failed, it will increase the distance at this amount
+INT_SOLU_DIST_MAX       7           # k_max: maximum distance in STreCH
+INT_NODELIMIT_INIT      10000       # gamma_init: the initial node limit
+INT_NODELIMIT_MAX       10000000    # gamma_max: the maximum node limit
+INT_FIXLEVEL_INIT       1           # beta_init: fix subset of y solutions to increase the speed
+INT_FIXLEVEL_MAX        2           # beta_max: the maximum fixlevel
+  
+
