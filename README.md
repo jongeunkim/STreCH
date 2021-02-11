@@ -14,4 +14,4 @@ Once MINLP or STreCH is finished, it will create `df_sol.csv`, which includes th
 
 The paper is working at Overleaf.
 
-`data/` folder contains all the datasets used in the paper. Each folder in `data/` includes a info file `info.txt`, two training set with/without noise, one validation set, and one testing set.
+`data/` contains all the datasets used in the paper. Each folder in `data/` includes a info file `info.txt`, two training set with/without noise, one validation set, and one testing set.
