@@ -1,4 +1,4 @@
-# This source code is licensed under the BSD-style license found in the `LICENSE` file in the root directory of this source tree.  
+This source code is licensed under the BSD-style license found in the `LICENSE` file in the root directory of this source tree.  
 
 This repository includes Julia codes for symbolic regression. The below instruction guides you how to install the requirements and run the code.
 
