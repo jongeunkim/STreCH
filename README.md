@@ -1,3 +1,5 @@
+This repository is under OPEN SOURCE LICENSE `LICENSE'.
+
 This repository includes Julia codes for symbolic regression. The below instruction guides you how to install the requirements and run the code.
 
 Install Julia. Available at [Julia Download](https://julialang.org/downloads/). This code is compatible with Julia 1.5.3.
