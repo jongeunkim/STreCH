@@ -1,4 +1,4 @@
-This repository is under OPEN SOURCE LICENSE `LICENSE'.
+This repository is under OPEN SOURCE LICENSE. The full license is stated at `LICENSE` file in the root.
 
 This repository includes Julia codes for symbolic regression. The below instruction guides you how to install the requirements and run the code.
 
