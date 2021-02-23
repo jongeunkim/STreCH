@@ -21,10 +21,10 @@ The paper is working at Overleaf.
 
 
 ********************************************************************************
-This source code is licensed under the BSD-style license found in the `LICENSE` file in the root directory of this source tree.  
 
 Notice: This software was developed in the course of or under prime
 contract No. DE-AC02-06CH11357 between the U.S.
 Department of Energy and UChicago Argonne, LLC.
+This source code is licensed under the BSD-style license found in the `LICENSE` file in the root directory of this source tree.  
 
 
