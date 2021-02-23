@@ -22,6 +22,6 @@ The paper is working at Overleaf.
 
 
 
-Notice: This software was developed in the course of or under prime
+* Notice: This software was developed in the course of or under prime
 contract No. DE-AC02-06CH11357 between the U.S.
 Department of Energy and UChicago Argonne, LLC.
