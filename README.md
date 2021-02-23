@@ -21,7 +21,10 @@ The paper is working at Overleaf.
 `data/` contains all the datasets used in the paper. Each folder in `data/` includes a info file `info.txt`, two training set with/without noise, one validation set, and one testing set.
 
 
-
+********************************************************************************
 * Notice: This software was developed in the course of or under prime
 contract No. DE-AC02-06CH11357 between the U.S.
 Department of Energy and UChicago Argonne, LLC.
+********************************************************************************
+
+
