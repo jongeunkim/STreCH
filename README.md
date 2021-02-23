@@ -1,4 +1,3 @@
-This source code is licensed under the BSD-style license found in the `LICENSE` file in the root directory of this source tree.  
 
 This repository includes Julia codes for symbolic regression. The below instruction guides you how to install the requirements and run the code.
 
@@ -22,9 +21,10 @@ The paper is working at Overleaf.
 
 
 ********************************************************************************
-* Notice: This software was developed in the course of or under prime
+This source code is licensed under the BSD-style license found in the `LICENSE` file in the root directory of this source tree.  
+
+Notice: This software was developed in the course of or under prime
 contract No. DE-AC02-06CH11357 between the U.S.
 Department of Energy and UChicago Argonne, LLC.
-********************************************************************************
 
 
